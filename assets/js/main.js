@@ -447,9 +447,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Create Button
+  // Create Button (Requires Authentication)
   if (els.navCreateBtn) {
     els.navCreateBtn.addEventListener('click', () => {
+      const st = store.getState();
+      if (!st.user) {
+        showToast('Please log in to upload a pin');
+        openAuthModal(false);
+        return;
+      }
       adminPanel.openCreate();
     });
   }
@@ -478,6 +484,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       router.navigate('profile');
     });
   }
+
+  // Explore Cards Navigation
+  document.querySelectorAll('.p-explore-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const creator = card.getAttribute('data-explore-creator');
+      if (creator) {
+        store.setCreator(creator);
+        router.navigate(`creator/${creator}`);
+      }
+    });
+  });
+
+  // Profile Board Cards Navigation
+  document.querySelectorAll('.p-board-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const creator = card.getAttribute('data-board-creator');
+      if (creator) {
+        store.setCreator(creator);
+        router.navigate(`creator/${creator}`);
+      }
+    });
+  });
 
   // Dismiss Popovers on Outside Click
   document.addEventListener('click', (e) => {
@@ -611,16 +639,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Comments Input & Send
+  // Pin Download Handler (Direct High-Resolution Blob Download)
+  if (els.detailDownloadBtn) {
+    els.detailDownloadBtn.addEventListener('click', async () => {
+      const pinId = store.getState().activePinId;
+      const pin = store.getState().pins.find(p => p.id === pinId);
+      if (!pin || !pin.img) {
+        showToast('No image available to download');
+        return;
+      }
+
+      showToast('Starting download...');
+      try {
+        const res = await fetch(pin.img, { mode: 'cors' });
+        if (!res.ok) throw new Error('Fetch failed');
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        const cleanName = (pin.title || 'selena-pin').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        a.download = `${cleanName}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        showToast('Download complete!');
+      } catch (err) {
+        // Direct link fallback
+        const a = document.createElement('a');
+        a.href = pin.img;
+        a.target = '_blank';
+        a.download = `${(pin.title || 'selena-pin').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Image opened for saving');
+      }
+    });
+  }
+
+  // Pin Share Handler (Web Share API & Clipboard Fallback)
+  if (els.detailShareBtn) {
+    els.detailShareBtn.addEventListener('click', async () => {
+      const pinId = store.getState().activePinId;
+      if (!pinId) return;
+      const shareUrl = `${window.location.origin}${window.location.pathname}#/pin/${pinId}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Selena Media Archive Pin',
+            url: shareUrl
+          });
+        } catch {}
+      } else {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast('Link copied to clipboard!');
+        } catch {
+          showToast('Could not copy link');
+        }
+      }
+    });
+  }
+
+  // Comments Input & Send (Requires Authentication)
   if (els.commentSendBtn && els.commentInput) {
     els.commentSendBtn.addEventListener('click', async () => {
+      const st = store.getState();
+      if (!st.user) {
+        showToast('Please log in to post a comment');
+        openAuthModal(false);
+        return;
+      }
+
       const content = els.commentInput.value.trim();
-      const pinId = store.getState().activePinId;
+      const pinId = st.activePinId;
       if (!content || !pinId) return;
 
-      const st = store.getState();
-      const userName = st.user?.user_metadata?.name || st.user?.email?.split('@')[0] || 'Guest Collector';
-      await PinsAPI.addComment(pinId, st.user?.id, content, userName);
+      const userName = st.user?.user_metadata?.name || st.user?.email?.split('@')[0] || 'Member';
+      await PinsAPI.addComment(pinId, st.user.id, content, userName);
       els.commentInput.value = '';
       loadPinComments(pinId);
       showToast('Comment posted!');
