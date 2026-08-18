@@ -98,11 +98,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     onSaveClick: (pinId) => store.toggleSave(pinId),
     onReactionClick: (pinId, type) => store.toggleReaction(pinId, type),
     onCreatorClick: (creatorId) => store.toggleFollow(creatorId),
-    onRelatedPinClick: (pinId) => router.navigate(`pin/${pinId}`)
+    onRelatedPinClick: (pinId) => router.navigate(`pin/${pinId}`),
+    onCommentSubmit: async (pinId, text) => {
+      const user = store.getState().user;
+      if (!user) {
+        showToast('Please log in to comment');
+        openAuth('login');
+        return false;
+      }
+      const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'Member';
+      const userAvatar = user.user_metadata?.avatar_url || 'assets/images/logo.png';
+      await PinsAPI.addComment(pinId, user.id, text, userName, userAvatar);
+      return true;
+    }
   });
 
   const createPinUI = createPinModalUI({
     modalEl: els.createModal,
+    getUser: () => store.getState().user,
     onPinCreated: (pin) => {
       showToast('Pin published successfully!');
       router.navigate(`pin/${pin.id}`);

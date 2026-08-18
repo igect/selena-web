@@ -8,7 +8,8 @@ import { PinsAPI } from '../api/pins.js';
 
 export function createPinModalUI({
   modalEl,
-  onPinCreated
+  onPinCreated,
+  getUser
 }) {
   const scrim = modalEl.querySelector('#pCreateScrim');
   const closeBtn = modalEl.querySelector('#pCloseCreateBtn');
@@ -110,7 +111,12 @@ export function createPinModalUI({
         const name = newBoardNameInput.value.trim();
         if (!name) return;
         try {
-          const board = await BoardsAPI.createBoard(name, 'authenticated');
+          const user = typeof getUser === 'function' ? getUser() : null;
+          if (!user) {
+            alert('Please log in to create a board.');
+            return;
+          }
+          const board = await BoardsAPI.createBoard(name, user.id);
           currentBoards.push(board);
           selectBoard(board.id, board.name);
           inlineBoardForm.hidden = true;
@@ -143,6 +149,7 @@ export function createPinModalUI({
         const title = titleInput?.value?.trim() || 'Untitled Pin';
         const description = descInput?.value?.trim() || '';
         const destinationLink = linkInput?.value?.trim() || null;
+        const user = typeof getUser === 'function' ? getUser() : null;
 
         try {
           submitBtn.disabled = true;
@@ -152,7 +159,9 @@ export function createPinModalUI({
             title,
             description,
             creator: 'rose',
+            creatorId: 'rose',
             boardId: selectedBoardId,
+            userId: user?.id || null,
             destinationLink
           };
 

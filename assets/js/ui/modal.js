@@ -11,7 +11,8 @@ export function createPinModal({
   onSaveClick,
   onReactionClick,
   onCreatorClick,
-  onRelatedPinClick
+  onRelatedPinClick,
+  onCommentSubmit
 }) {
   const scrim = modalEl.querySelector('#pModalScrim') || modalEl.querySelector('.p-modal-backdrop');
   const closeBtn = modalEl.querySelector('#pCloseModalBtn');
@@ -81,10 +82,14 @@ export function createPinModal({
       const send = async () => {
         const text = commentInput.value.trim();
         if (!text || !currentPin) return;
-        commentInput.value = '';
         try {
-          await PinsAPI.addComment(currentPin.id, 'guest-user', text);
-          loadComments(currentPin.id);
+          if (onCommentSubmit) {
+            const success = await onCommentSubmit(currentPin.id, text);
+            if (success) {
+              commentInput.value = '';
+              loadComments(currentPin.id);
+            }
+          }
         } catch (err) {
           console.error('[Modal] Comment error:', err);
         }

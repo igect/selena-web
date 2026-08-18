@@ -64,4 +64,24 @@ describe('PinsAPI Module Suite', () => {
     assert.equal(formatted.likesCount, 0);
     assert.deepEqual(formatted.tags, []);
   });
+
+  it('correctly parses tags array and comma strings in formatPinRow', () => {
+    const pin1 = PinsAPI.formatPinRow({
+      id: 'p1',
+      title: 'Tag Test 1',
+      creator_id: 'rose',
+      image_url: 'https://example.com/p1.jpg',
+      tags: ['one', 'two']
+    });
+    assert.deepEqual(pin1.tags, ['one', 'two']);
+
+    const pin2 = PinsAPI.formatPinRow({
+      id: 'p2',
+      title: 'Tag Test 2',
+      creator_id: 'rose',
+      image_url: 'https://example.com/p2.jpg',
+      tags: null
+    });
+    assert.deepEqual(pin2.tags, []);
+  });
 });
