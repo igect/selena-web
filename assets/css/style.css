@@ -1976,6 +1976,63 @@ button {
   .p-main-view { padding: 0 12px; }
 }
 
+@media (max-width: 600px) {
+  .p-header {
+    padding: 10px 12px;
+  }
+
+  /* Collapse text pills to compact buttons on mobile */
+  .p-nav-btn span {
+    display: none;
+  }
+  #pNavHome, #pNavExplore {
+    padding: 0 12px;
+    font-size: 0.85rem;
+  }
+
+  .p-header-right {
+    gap: 2px;
+  }
+  .p-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .p-avatar-circle {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Mobile bottom-sheet modals */
+  .p-modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .p-modal-container {
+    max-height: 100vh;
+    border-radius: 20px 20px 0 0;
+  }
+  .p-create-card, .p-admin-drawer-container {
+    padding: 20px;
+  }
+  .p-auth-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 28px 20px;
+  }
+
+  /* Admin scaling */
+  .p-admin-section {
+    padding: 0 12px;
+  }
+  .p-admin-heading {
+    font-size: 1.4rem;
+  }
+  .p-admin-title-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
 /* ==========================================================================
    Admin CMS Dashboard & Data Table
    ========================================================================== */
