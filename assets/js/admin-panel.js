@@ -477,6 +477,9 @@ export function createAdminPanel(store, router) {
           closeDrawer();
           loadMetrics();
           loadPinsTable();
+          // Reload feed so new pin appears immediately
+          router.navigate('');
+          setTimeout(() => window.location.reload(), 300);
         } catch (err) {
           alert('Error saving pin: ' + err.message);
         } finally {
@@ -494,6 +497,9 @@ export function createAdminPanel(store, router) {
     refresh() {
       loadMetrics();
       loadPinsTable();
+    },
+    openCreate() {
+      openDrawer(null);
     }
   };
 }

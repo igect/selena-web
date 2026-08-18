@@ -450,17 +450,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Create Button
   if (els.navCreateBtn) {
     els.navCreateBtn.addEventListener('click', () => {
-      const st = store.getState();
-      if (st.isAdmin) {
-        router.navigate('admin');
-      } else if (els.createModal) {
-        els.createModal.hidden = false;
-      }
+      adminPanel.openCreate();
     });
   }
 
-  if (els.closeCreateBtn) els.closeCreateBtn.addEventListener('click', () => els.createModal.hidden = true);
-  if (els.createScrim) els.createScrim.addEventListener('click', () => els.createModal.hidden = true);
+  // Notifications Popover
+  if (els.notifBtn && els.notifPanel) {
+    els.notifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      els.notifPanel.hidden = !els.notifPanel.hidden;
+      if (els.inboxPanel) els.inboxPanel.hidden = true;
+    });
+  }
+
+  // Messages / Inbox Popover
+  if (els.inboxBtn && els.inboxPanel) {
+    els.inboxBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      els.inboxPanel.hidden = !els.inboxPanel.hidden;
+      if (els.notifPanel) els.notifPanel.hidden = true;
+    });
+  }
+
+  // Favorites / Heart Header Button
+  if (els.savedBtn) {
+    els.savedBtn.addEventListener('click', () => {
+      router.navigate('profile');
+    });
+  }
+
+  // Dismiss Popovers on Outside Click
+  document.addEventListener('click', (e) => {
+    if (els.notifPanel && !els.notifPanel.contains(e.target) && e.target !== els.notifBtn && !els.notifBtn?.contains(e.target)) {
+      els.notifPanel.hidden = true;
+    }
+    if (els.inboxPanel && !els.inboxPanel.contains(e.target) && e.target !== els.inboxBtn && !els.inboxBtn?.contains(e.target)) {
+      els.inboxPanel.hidden = true;
+    }
+  });
 
   // Search
   if (els.searchInput) {
