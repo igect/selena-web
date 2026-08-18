@@ -79,3 +79,19 @@ export async function subscribeTable(channelName, table, callback) {
     }
   };
 }
+
+/**
+ * Remove all active realtime subscriptions
+ */
+export async function unsubscribeAll() {
+  const sb = await getSupabase();
+  if (sb) {
+    for (const [name, channel] of realtimeChannels.entries()) {
+      try {
+        sb.removeChannel(channel);
+      } catch {}
+    }
+  }
+  realtimeChannels.clear();
+}
+

@@ -28,6 +28,30 @@ describe('AppStore Deep Module Suite', () => {
     assert.equal(state.page, 1);
   });
 
+  it('atomically applies routes with applyRoute', () => {
+    const store = createAppStore();
+    store.nextPage();
+
+    store.applyRoute({ view: 'home', params: { creatorId: 'yamu' } });
+    let state = store.getState();
+    assert.equal(state.view, 'home');
+    assert.equal(state.activeCreatorId, 'yamu');
+    assert.equal(state.activeBoardId, null);
+    assert.equal(state.filter, 'all');
+    assert.equal(state.page, 1);
+
+    store.applyRoute({ view: 'profile', params: { profileTab: 'saved' } });
+    state = store.getState();
+    assert.equal(state.view, 'profile');
+    assert.equal(state.profileTab, 'saved');
+  });
+
+  it('sets and merges savedPinIds from server', () => {
+    const store = createAppStore();
+    store.setSavedPinIds(['pin-1', 'pin-2']);
+    assert.deepEqual(store.getState().savedPinIds, ['pin-1', 'pin-2']);
+  });
+
   it('updates search query and resets page', () => {
     const store = createAppStore();
     store.nextPage();
@@ -42,10 +66,12 @@ describe('AppStore Deep Module Suite', () => {
     const store = createAppStore();
     const pinId = 'pin-test-101';
 
-    await store.toggleSave(pinId);
+    const saved1 = await store.toggleSave(pinId);
+    assert.equal(saved1, true);
     assert.equal(store.getState().savedPinIds.includes(pinId), true);
 
-    await store.toggleSave(pinId);
+    const saved2 = await store.toggleSave(pinId);
+    assert.equal(saved2, false);
     assert.equal(store.getState().savedPinIds.includes(pinId), false);
   });
 
@@ -53,10 +79,12 @@ describe('AppStore Deep Module Suite', () => {
     const store = createAppStore();
     const pinId = 'pin-test-202';
 
-    await store.toggleReaction(pinId, 'love');
+    const rx1 = await store.toggleReaction(pinId, 'love');
+    assert.equal(rx1, true);
     assert.equal(Boolean(store.getState().reactions[pinId]?.love), true);
 
-    await store.toggleReaction(pinId, 'love');
+    const rx2 = await store.toggleReaction(pinId, 'love');
+    assert.equal(rx2, false);
     assert.equal(Boolean(store.getState().reactions[pinId]?.love), false);
   });
 

@@ -7,6 +7,7 @@ export class AppRouter {
   constructor(onRouteChange) {
     this.onRouteChange = onRouteChange;
     this.handleHashChange = this.handleHashChange.bind(this);
+    this.lastNonPinRoute = '';
   }
 
   /**
@@ -21,7 +22,7 @@ export class AppRouter {
    * Parses the current window location hash into route descriptor
    */
   parseRoute() {
-    const raw = window.location.hash.replace(/^#\/?/, '').trim();
+    const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '').trim();
     const parts = raw.split('/').filter(Boolean);
 
     if (parts.length === 0) {
@@ -58,7 +59,11 @@ export class AppRouter {
   }
 
   handleHashChange() {
+    const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '').trim();
     const route = this.parseRoute();
+    if (route.view !== 'pin') {
+      this.lastNonPinRoute = raw;
+    }
     if (typeof this.onRouteChange === 'function') {
       this.onRouteChange(route);
     }
@@ -70,6 +75,8 @@ export class AppRouter {
   navigate(path, replace = false) {
     const clean = path.replace(/^#\/?/, '');
     const targetHash = clean ? `#/${clean}` : '#/';
+
+    if (typeof window === 'undefined') return;
 
     if (window.location.hash === targetHash) {
       this.handleHashChange();
@@ -85,9 +92,18 @@ export class AppRouter {
   }
 
   /**
+   * Closes pin modal and restores the prior view/filter route
+   */
+  closePin() {
+    this.navigate(this.lastNonPinRoute || '');
+  }
+
+  /**
    * Destroys router event listeners
    */
   destroy() {
-    window.removeEventListener('hashchange', this.handleHashChange);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('hashchange', this.handleHashChange);
+    }
   }
 }

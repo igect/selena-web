@@ -12,7 +12,9 @@ export function createPinModal({
   onReactionClick,
   onCreatorClick,
   onRelatedPinClick,
-  onCommentSubmit
+  onCommentSubmit,
+  getUser = () => null,
+  onAuthRequired = () => {}
 }) {
   const scrim = modalEl.querySelector('#pModalScrim') || modalEl.querySelector('.p-modal-backdrop');
   const closeBtn = modalEl.querySelector('#pCloseModalBtn');
@@ -40,6 +42,7 @@ export function createPinModal({
   const relatedGrid = modalEl.querySelector('.p-related-pins-grid');
 
   let currentPin = null;
+  let isReacting = false;
 
   function init() {
     if (closeBtn) closeBtn.addEventListener('click', close);
@@ -77,19 +80,35 @@ export function createPinModal({
 
     rxButtons.forEach(btn => {
       btn.addEventListener('click', async () => {
+        if (isReacting || !currentPin) return;
         const type = btn.getAttribute('data-reaction');
-        if (currentPin && onReactionClick && type) {
+        if (!type || !onReactionClick) return;
+
+        isReacting = true;
+        btn.style.opacity = '0.6';
+        try {
           await onReactionClick(currentPin.id, type);
-          loadReactionCounts(currentPin.id);
+          await loadReactionCounts(currentPin.id);
+        } finally {
+          btn.style.opacity = '1';
+          isReacting = false;
         }
       });
     });
 
     if (commentSendBtn && commentInput) {
       const send = async () => {
+        const user = getUser();
+        if (!user) {
+          if (onAuthRequired) onAuthRequired();
+          return;
+        }
+
         const text = commentInput.value.trim();
         if (!text || !currentPin) return;
+
         try {
+          commentSendBtn.disabled = true;
           if (onCommentSubmit) {
             const success = await onCommentSubmit(currentPin.id, text);
             if (success) {
@@ -99,12 +118,22 @@ export function createPinModal({
           }
         } catch (err) {
           console.error('[Modal] Comment error:', err);
+        } finally {
+          commentSendBtn.disabled = false;
         }
       };
 
       commentSendBtn.addEventListener('click', send);
       commentInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') send();
+      });
+
+      commentInput.addEventListener('focus', () => {
+        const user = getUser();
+        if (!user && onAuthRequired) {
+          commentInput.blur();
+          onAuthRequired();
+        }
       });
     }
   }
@@ -150,6 +179,9 @@ export function createPinModal({
 
     loadComments(pin.id);
     loadRelated(pin.id, pin.creator);
+
+    // Focus trap setup
+    if (closeBtn) closeBtn.focus();
   }
 
   function close() {
@@ -163,6 +195,7 @@ export function createPinModal({
     if (saveBtn) {
       saveBtn.textContent = isSaved ? 'Saved' : 'Save';
       saveBtn.classList.toggle('saved', isSaved);
+      saveBtn.setAttribute('aria-label', isSaved ? 'Unsave pin' : 'Save pin');
     }
   }
 
@@ -178,6 +211,10 @@ export function createPinModal({
       const type = btn.getAttribute('data-reaction');
       btn.classList.toggle('active', Boolean(activeReactions[type]));
     });
+  }
+
+  function getCurrentPinId() {
+    return currentPin?.id || null;
   }
 
   async function loadReactionCounts(pinId) {
@@ -225,7 +262,7 @@ export function createPinModal({
         return;
       }
       relatedGrid.innerHTML = related.map(p => `
-        <div class="p-related-card" data-id="${p.id}" tabindex="0">
+        <div class="p-related-card" data-id="${p.id}" tabindex="0" role="button" aria-label="${escapeHtml(p.title)}">
           <img src="${p.img}" alt="${escapeHtml(p.title)}" loading="lazy" />
         </div>
       `).join('');
@@ -248,7 +285,8 @@ export function createPinModal({
     close,
     updateSaveState,
     updateFollowState,
-    updateReactionsState
+    updateReactionsState,
+    getCurrentPinId
   };
 }
 

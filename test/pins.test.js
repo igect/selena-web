@@ -7,10 +7,12 @@ describe('PinsAPI Module Suite', () => {
     const rawRow = {
       id: 'd9b3d111-2222-3333-4444-555555555555',
       legacy_id: 'rose-01',
+      user_id: 'user-uuid-999',
       title: 'Velvet Midnight Shoot',
       creator_id: 'rose',
       creators: { name: 'Rosé', handle: '@roses_are_rosie', avatar_url: 'assets/images/logo.png', follower_count: 1420000 },
       category: 'photo',
+      aspect_ratio: 1.5,
       image_url: 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/rose_01.jpg',
       image_path: 'archive/rose_01.jpg',
       destination_link: 'https://instagram.com/roses_are_rosie',
@@ -26,6 +28,7 @@ describe('PinsAPI Module Suite', () => {
     const formatted = PinsAPI.formatPinRow(rawRow);
 
     assert.equal(formatted.id, 'd9b3d111-2222-3333-4444-555555555555');
+    assert.equal(formatted.userId, 'user-uuid-999');
     assert.equal(formatted.title, 'Velvet Midnight Shoot');
     assert.equal(formatted.creator, 'rose');
     assert.equal(formatted.creatorName, 'Rosé');
@@ -35,6 +38,7 @@ describe('PinsAPI Module Suite', () => {
     assert.equal(formatted.savesCount, 342);
     assert.equal(formatted.likesCount, 120);
     assert.equal(formatted.isPublished, true);
+    assert.equal(formatted.aspectRatio, 1.5);
     assert.deepEqual(formatted.tags, ['fashion', 'velvet', 'editorial']);
   });
 
@@ -60,6 +64,8 @@ describe('PinsAPI Module Suite', () => {
     assert.equal(formatted.creatorHandle, '');
     assert.equal(formatted.creatorAvatar, 'assets/images/logo.png');
     assert.equal(formatted.board, 'General');
+    assert.equal(formatted.userId, null);
+    assert.equal(formatted.aspectRatio, null);
     assert.equal(formatted.savesCount, 0);
     assert.equal(formatted.likesCount, 0);
     assert.deepEqual(formatted.tags, []);

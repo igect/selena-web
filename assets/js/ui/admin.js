@@ -1,6 +1,6 @@
 /**
  * Selena Media Archive — UI Admin CMS Component
- * Deep module managing administration dashboard, catalog table, editor drawer, and media uploads.
+ * Deep module managing administration dashboard, catalog table, editor drawer, media uploads, and batch actions.
  */
 
 import { AdminAPI } from '../api/admin.js';
@@ -15,6 +15,17 @@ export function createAdminUI({
   const statusFilter = container.querySelector('#pAdminStatusFilter');
   const newPinBtn = container.querySelector('#pAdminNewPinBtn');
   const tableBody = container.querySelector('#pAdminTableBody');
+  const selectAllCheck = container.querySelector('#pAdminSelectAll');
+
+  const batchToolbar = container.querySelector('#pAdminBatchToolbar');
+  const batchCountEl = container.querySelector('.p-batch-count');
+  const batchPublishBtn = container.querySelector('#pAdminBatchPublish');
+  const batchDraftBtn = container.querySelector('#pAdminBatchDraft');
+  const batchDeleteBtn = container.querySelector('#pAdminBatchDelete');
+
+  const prevPageBtn = container.querySelector('#pAdminPrevPage');
+  const nextPageBtn = container.querySelector('#pAdminNextPage');
+  const paginationInfo = container.querySelector('#pAdminPaginationInfo');
 
   const drawerModal = document.getElementById('pAdminDrawerModal');
   const drawerCloseBtn = document.getElementById('pAdminCloseDrawer');
@@ -32,6 +43,10 @@ export function createAdminUI({
   let editingPinId = null;
   let selectedFile = null;
   let availableBoards = [];
+  let currentPage = 1;
+  const pageSize = 20;
+  let totalCount = 0;
+  let selectedPinIds = new Set();
 
   function init() {
     if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
@@ -45,12 +60,95 @@ export function createAdminUI({
       let debounce;
       searchInput.addEventListener('input', () => {
         clearTimeout(debounce);
-        debounce = setTimeout(() => loadTable(), 300);
+        debounce = setTimeout(() => {
+          currentPage = 1;
+          loadTable();
+        }, 300);
       });
     }
 
-    if (creatorFilter) creatorFilter.addEventListener('change', () => loadTable());
-    if (statusFilter) statusFilter.addEventListener('change', () => loadTable());
+    if (creatorFilter) creatorFilter.addEventListener('change', () => { currentPage = 1; loadTable(); });
+    if (statusFilter) statusFilter.addEventListener('change', () => { currentPage = 1; loadTable(); });
+
+    if (prevPageBtn) {
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          loadTable();
+        }
+      });
+    }
+
+    if (nextPageBtn) {
+      nextPageBtn.addEventListener('click', () => {
+        if (currentPage * pageSize < totalCount) {
+          currentPage++;
+          loadTable();
+        }
+      });
+    }
+
+    if (selectAllCheck) {
+      selectAllCheck.addEventListener('change', () => {
+        const checks = tableBody?.querySelectorAll('.p-pin-check') || [];
+        checks.forEach(c => {
+          c.checked = selectAllCheck.checked;
+          const id = c.getAttribute('data-id');
+          if (id) {
+            if (selectAllCheck.checked) selectedPinIds.add(id);
+            else selectedPinIds.delete(id);
+          }
+        });
+        updateBatchToolbar();
+      });
+    }
+
+    if (batchPublishBtn) {
+      batchPublishBtn.addEventListener('click', async () => {
+        if (!selectedPinIds.size) return;
+        try {
+          await AdminAPI.batchPublish(Array.from(selectedPinIds), true);
+          selectedPinIds.clear();
+          loadMetrics();
+          loadTable();
+          if (onPinSaved) onPinSaved();
+        } catch (err) {
+          alert('Batch publish failed: ' + err.message);
+        }
+      });
+    }
+
+    if (batchDraftBtn) {
+      batchDraftBtn.addEventListener('click', async () => {
+        if (!selectedPinIds.size) return;
+        try {
+          await AdminAPI.batchPublish(Array.from(selectedPinIds), false);
+          selectedPinIds.clear();
+          loadMetrics();
+          loadTable();
+          if (onPinSaved) onPinSaved();
+        } catch (err) {
+          alert('Batch unpublish failed: ' + err.message);
+        }
+      });
+    }
+
+    if (batchDeleteBtn) {
+      batchDeleteBtn.addEventListener('click', async () => {
+        if (!selectedPinIds.size) return;
+        if (confirm(`Delete ${selectedPinIds.size} pins permanently?`)) {
+          try {
+            await AdminAPI.batchDelete(Array.from(selectedPinIds));
+            selectedPinIds.clear();
+            loadMetrics();
+            loadTable();
+            if (onPinSaved) onPinSaved();
+          } catch (err) {
+            alert('Batch delete failed: ' + err.message);
+          }
+        }
+      });
+    }
 
     if (dropzone && fileInput) {
       dropzone.addEventListener('click', (e) => {
@@ -77,7 +175,7 @@ export function createAdminUI({
 
         const title = document.getElementById('pAdminInputTitle')?.value?.trim();
         const description = document.getElementById('pAdminInputDesc')?.value?.trim() || '';
-        const creator_id = document.getElementById('pAdminSelectCreator')?.value || 'rose';
+        const creator_id = document.getElementById('pAdminSelectCreator')?.value || 'yamu';
         const board_id = document.getElementById('pAdminSelectBoard')?.value || null;
         const destination_link = document.getElementById('pAdminInputLink')?.value?.trim() || null;
         const tags = (document.getElementById('pAdminInputTags')?.value || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -132,6 +230,12 @@ export function createAdminUI({
     }
   }
 
+  function updateBatchToolbar() {
+    const count = selectedPinIds.size;
+    if (batchToolbar) batchToolbar.hidden = count === 0;
+    if (batchCountEl) batchCountEl.textContent = `${count} selected`;
+  }
+
   function handleFile(file) {
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file.');
@@ -182,8 +286,19 @@ export function createAdminUI({
       const creator = creatorFilter?.value || 'all';
       const status = statusFilter?.value || 'all';
 
-      const res = await AdminAPI.fetchAdminPins({ search, creator, status, pageSize: 50 });
+      const res = await AdminAPI.fetchAdminPins({ page: currentPage, pageSize, search, creator, status });
       const pins = res.pins || [];
+      totalCount = res.totalCount || 0;
+
+      // Update Pagination Info
+      const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+      if (paginationInfo) paginationInfo.textContent = `Page ${currentPage} of ${totalPages} (${totalCount} pins)`;
+      if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+      if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+
+      if (selectAllCheck) selectAllCheck.checked = false;
+      selectedPinIds.clear();
+      updateBatchToolbar();
 
       if (pins.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="7" class="p-table-empty">No pins matching search criteria.</td></tr>';
@@ -211,6 +326,17 @@ export function createAdminUI({
           </td>
         </tr>
       `).join('');
+
+      tableBody.querySelectorAll('.p-pin-check').forEach(c => {
+        c.addEventListener('change', () => {
+          const id = c.getAttribute('data-id');
+          if (id) {
+            if (c.checked) selectedPinIds.add(id);
+            else selectedPinIds.delete(id);
+          }
+          updateBatchToolbar();
+        });
+      });
 
       tableBody.querySelectorAll('[data-action="edit"]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -265,7 +391,7 @@ export function createAdminUI({
 
       if (titleIn) titleIn.value = pin.title || '';
       if (descIn) descIn.value = pin.description || '';
-      if (creatorIn) creatorIn.value = pin.creator_id || 'rose';
+      if (creatorIn) creatorIn.value = pin.creator_id || 'yamu';
       if (linkIn) linkIn.value = pin.destination_link || '';
       if (tagsIn) tagsIn.value = (pin.tags || []).join(', ');
       if (pubIn) pubIn.checked = pin.is_published !== false;

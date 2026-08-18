@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Selena Stylesheet -->
-  <link rel="stylesheet" href="assets/css/style.css?v=2.0.5">
+  <link rel="stylesheet" href="assets/css/style.css?v=3.0.0">
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1348678320123659"
@@ -149,7 +149,7 @@
 
   <!-- Pinterest Ideas Filter Chips -->
   <section class="p-chips-bar" id="pChipsBar">
-    <div class="p-chips-scroll">
+    <div class="p-chips-scroll" id="pChipsScroll">
       <button class="p-chip active" data-creator="all">All</button>
       <button class="p-chip" data-creator="rose">Rosé</button>
       <button class="p-chip" data-creator="sharly">Sharly Modak</button>
@@ -182,8 +182,11 @@
 
       <!-- Authentic Pinterest Masonry Pin Grid -->
       <div class="p-masonry-grid" id="pPinGrid" aria-live="polite">
-        <!-- Rendered reactively by bundle.js -->
+        <!-- Rendered reactively by main.js -->
       </div>
+
+      <!-- Infinite Scroll Sentinel -->
+      <div id="pFeedSentinel" class="p-feed-sentinel"></div>
 
       <!-- Empty Feed State -->
       <div id="pEmptyState" class="p-empty-state" hidden>
@@ -649,6 +652,11 @@
         <div id="pAuthError" class="p-auth-error" hidden role="alert"></div>
 
         <form id="pAuthForm" class="p-auth-form">
+          <div class="p-form-group" id="pAuthNameGroup" hidden>
+            <label for="pAuthName">Full Name</label>
+            <input type="text" id="pAuthName" class="p-input-text" placeholder="Your display name" autocomplete="name">
+          </div>
+
           <div class="p-form-group">
             <label for="pAuthEmail">Email Address</label>
             <input type="email" id="pAuthEmail" class="p-input-text" placeholder="name@example.com" required autocomplete="email">
@@ -682,7 +690,7 @@
   </div>
 
   <!-- Main ES Module Entry Point -->
-  <script type="module" src="assets/js/main.js?v=2.0.5"></script>
+  <script type="module" src="assets/js/main.js?v=3.0.0"></script>
 
 </body>
 </html>

@@ -20,7 +20,7 @@ export function createAppStore() {
     authLoading: true,
 
     // Routing & View
-    view: 'home', // 'home' | 'explore' | 'pin' | 'board' | 'creator' | 'profile' | 'admin'
+    view: 'home', // 'home' | 'explore' | 'pin' | 'profile' | 'admin'
     activePinId: null,
     activeBoardId: null,
     activeCreatorId: 'all',
@@ -29,7 +29,7 @@ export function createAppStore() {
     // Feed State
     filter: 'all', // 'all' | 'popular' | 'saved'
     query: '',
-    sort: 'newest',
+    sort: 'newest', // 'newest' | 'popular' | 'oldest'
     page: 1,
     pins: [],
     totalCount: 0,
@@ -82,6 +82,12 @@ export function createAppStore() {
       notify();
     },
 
+    setSavedPinIds(ids) {
+      state.savedPinIds = Array.isArray(ids) ? ids : [];
+      storage.set('selena_saved_pins', state.savedPinIds);
+      notify();
+    },
+
     // View & Filter Mutations
     setView(view, params = {}) {
       state.view = view;
@@ -89,6 +95,46 @@ export function createAppStore() {
       if (params.boardId !== undefined) state.activeBoardId = params.boardId;
       if (params.creatorId !== undefined) state.activeCreatorId = params.creatorId;
       if (params.profileTab !== undefined) state.profileTab = params.profileTab;
+      notify();
+    },
+
+    applyRoute(route) {
+      const { view, params = {} } = route;
+      state.view = view;
+
+      if (params.pinId !== undefined) {
+        state.activePinId = params.pinId;
+      }
+
+      if (params.boardId !== undefined) {
+        state.activeBoardId = params.boardId;
+        state.activeCreatorId = 'all';
+        state.filter = 'all';
+        state.page = 1;
+        state.pins = [];
+      } else if (params.creatorId !== undefined) {
+        state.activeCreatorId = params.creatorId;
+        state.activeBoardId = null;
+        state.filter = 'all';
+        state.page = 1;
+        state.pins = [];
+      } else if (params.filter !== undefined) {
+        state.filter = params.filter;
+        state.activeBoardId = null;
+        state.page = 1;
+        state.pins = [];
+      } else if (view === 'home') {
+        state.activeCreatorId = 'all';
+        state.activeBoardId = null;
+        state.filter = 'all';
+        state.page = 1;
+        state.pins = [];
+      }
+
+      if (params.profileTab !== undefined) {
+        state.profileTab = params.profileTab;
+      }
+
       notify();
     },
 
@@ -179,7 +225,7 @@ export function createAppStore() {
       }
     },
 
-    // User Interaction Actions
+    // User Interaction Actions with Rollback
     async toggleSave(pinId) {
       const isSaved = state.savedPinIds.includes(pinId);
       const updated = isSaved ? state.savedPinIds.filter(id => id !== pinId) : [...state.savedPinIds, pinId];
@@ -188,8 +234,15 @@ export function createAppStore() {
       notify();
 
       if (state.user) {
-        await PinsAPI.toggleSave(pinId, state.user.id, isSaved);
+        const success = await PinsAPI.toggleSave(pinId, state.user.id, isSaved);
+        if (!success) {
+          state.savedPinIds = isSaved ? [...state.savedPinIds, pinId] : state.savedPinIds.filter(id => id !== pinId);
+          storage.set('selena_saved_pins', state.savedPinIds);
+          notify();
+          return isSaved;
+        }
       }
+      return !isSaved;
     },
 
     async toggleReaction(pinId, reactionType) {
@@ -207,8 +260,17 @@ export function createAppStore() {
       notify();
 
       if (state.user) {
-        await PinsAPI.toggleReaction(pinId, state.user.id, reactionType, hasReacted);
+        const success = await PinsAPI.toggleReaction(pinId, state.user.id, reactionType, hasReacted);
+        if (!success) {
+          if (hasReacted) rx[reactionType] = true;
+          else delete rx[reactionType];
+          state.reactions[pinId] = rx;
+          storage.set('selena_reactions', state.reactions);
+          notify();
+          return hasReacted;
+        }
       }
+      return !hasReacted;
     },
 
     toggleFollow(creatorId) {

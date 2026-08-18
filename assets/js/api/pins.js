@@ -167,44 +167,88 @@ export const PinsAPI = {
   },
 
   /**
-   * Toggle Pin Save (Bookmark)
+   * Fetch list of pin IDs saved by a specific user from Supabase
    */
-  async toggleSave(pinId, userId, isSaved) {
+  async fetchUserSavedPinIds(userId) {
     const sb = await getSupabase();
-    if (!sb || !userId) return;
+    if (!sb || !userId) return [];
 
-    if (isSaved) {
-      const { error } = await sb
+    try {
+      const { data, error } = await sb
         .from('pin_saves')
-        .delete()
-        .match({ pin_id: pinId, user_id: userId });
-      if (error) console.error('[PinsAPI] toggleSave delete error:', error);
-    } else {
-      const { error } = await sb
-        .from('pin_saves')
-        .insert({ pin_id: pinId, user_id: userId });
-      if (error) console.error('[PinsAPI] toggleSave insert error:', error);
+        .select('pin_id')
+        .eq('user_id', userId);
+
+      if (error || !data) return [];
+      return data.map(r => r.pin_id).filter(Boolean);
+    } catch {
+      return [];
     }
   },
 
   /**
-   * Toggle Reaction (love, sparkle, fire)
+   * Toggle Pin Save (Bookmark) - returns boolean success
+   */
+  async toggleSave(pinId, userId, isSaved) {
+    const sb = await getSupabase();
+    if (!sb || !userId) return false;
+
+    try {
+      if (isSaved) {
+        const { error } = await sb
+          .from('pin_saves')
+          .delete()
+          .match({ pin_id: pinId, user_id: userId });
+        if (error) {
+          console.error('[PinsAPI] toggleSave delete error:', error);
+          return false;
+        }
+      } else {
+        const { error } = await sb
+          .from('pin_saves')
+          .insert({ pin_id: pinId, user_id: userId });
+        if (error) {
+          console.error('[PinsAPI] toggleSave insert error:', error);
+          return false;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error('[PinsAPI] toggleSave exception:', err);
+      return false;
+    }
+  },
+
+  /**
+   * Toggle Reaction (love, sparkle, fire) - returns boolean success
    */
   async toggleReaction(pinId, userId, reactionType, hasReacted) {
     const sb = await getSupabase();
-    if (!sb || !userId) return;
+    if (!sb || !userId) return false;
 
-    if (hasReacted) {
-      const { error } = await sb
-        .from('pin_reactions')
-        .delete()
-        .match({ pin_id: pinId, user_id: userId, reaction_type: reactionType });
-      if (error) console.error('[PinsAPI] toggleReaction delete error:', error);
-    } else {
-      const { error } = await sb
-        .from('pin_reactions')
-        .insert({ pin_id: pinId, user_id: userId, reaction_type: reactionType });
-      if (error) console.error('[PinsAPI] toggleReaction insert error:', error);
+    try {
+      if (hasReacted) {
+        const { error } = await sb
+          .from('pin_reactions')
+          .delete()
+          .match({ pin_id: pinId, user_id: userId, reaction_type: reactionType });
+        if (error) {
+          console.error('[PinsAPI] toggleReaction delete error:', error);
+          return false;
+        }
+      } else {
+        const { error } = await sb
+          .from('pin_reactions')
+          .insert({ pin_id: pinId, user_id: userId, reaction_type: reactionType });
+        if (error) {
+          console.error('[PinsAPI] toggleReaction insert error:', error);
+          return false;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error('[PinsAPI] toggleReaction exception:', err);
+      return false;
     }
   },
 
@@ -314,7 +358,7 @@ export const PinsAPI = {
     const row = {
       title: pinData.title || 'Untitled Pin',
       description: pinData.description || '',
-      creator_id: pinData.creatorId || pinData.creator || 'rose',
+      creator_id: pinData.creatorId || pinData.creator || 'yamu',
       board_id: pinData.boardId || null,
       user_id: pinData.userId || null,
       image_url: imageUrl,
@@ -344,6 +388,7 @@ export const PinsAPI = {
     return {
       id: p.id,
       legacyId: p.legacy_id,
+      userId: p.user_id || null,
       title: p.title,
       creator: p.creator_id,
       creatorName: p.creators?.name || p.creator_id,
@@ -351,6 +396,7 @@ export const PinsAPI = {
       creatorAvatar: p.creators?.avatar_url || 'assets/images/logo.png',
       creatorFollowers: p.creators?.follower_count || 0,
       category: p.category,
+      aspectRatio: p.aspect_ratio || null,
       date: p.published_at?.split('T')[0] || p.created_at?.split('T')[0] || '',
       img: CONFIG.resolveImageUrl(p.image_url),
       imagePath: p.image_path,

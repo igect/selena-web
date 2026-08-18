@@ -1,10 +1,10 @@
 /**
  * Selena Media Archive — UI Feed Component
- * Renders high-performance masonry pin cards with bookmarking and interaction triggers.
+ * Renders high-performance masonry pin cards with bookmarking, error states, and interaction triggers.
  */
 
-export function createFeedUI({ container, onPinClick, onSaveClick }) {
-  function renderPins(pins, append = false) {
+export function createFeedUI({ container, onPinClick, onSaveClick, onRetry }) {
+  function renderPins(pins, append = false, savedPinIds = []) {
     if (!container) return;
 
     if (!append) {
@@ -15,9 +15,9 @@ export function createFeedUI({ container, onPinClick, onSaveClick }) {
       if (!append) {
         container.innerHTML = `
           <div class="p-empty-state">
-            <div class="p-empty-icon">🖼️</div>
-            <h3>No pins found</h3>
-            <p>Try searching for a different term or selecting another creator collection.</p>
+            <div class="p-empty-icon">🔍</div>
+            <h2 class="p-empty-title">No Pins Found</h2>
+            <p class="p-empty-desc">We couldn't find any pins matching your active search or filters.</p>
           </div>
         `;
       }
@@ -27,13 +27,18 @@ export function createFeedUI({ container, onPinClick, onSaveClick }) {
     const fragment = document.createDocumentFragment();
 
     pins.forEach(pin => {
+      const isSaved = savedPinIds.includes(pin.id);
       const card = document.createElement('article');
       card.className = 'p-pin-card';
       card.setAttribute('data-id', pin.id);
       card.setAttribute('tabindex', '0');
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `${pin.title || 'Pin'} by ${pin.creatorName}`);
+
+      const aspectStyle = pin.aspectRatio ? `style="aspect-ratio: ${pin.aspectRatio};"` : '';
 
       card.innerHTML = `
-        <div class="p-pin-media">
+        <div class="p-pin-media" ${aspectStyle}>
           <img
             src="${pin.img}"
             alt="${escapeHtml(pin.title)}"
@@ -42,8 +47,8 @@ export function createFeedUI({ container, onPinClick, onSaveClick }) {
             decoding="async"
           />
           <div class="p-pin-overlay">
-            <button class="p-pin-save-btn" data-pin-id="${pin.id}" aria-label="Save pin">
-              Save
+            <button class="p-pin-save-btn ${isSaved ? 'saved' : ''}" data-pin-id="${pin.id}" aria-label="${isSaved ? 'Unsave pin' : 'Save pin'}">
+              ${isSaved ? 'Saved' : 'Save'}
             </button>
             ${pin.destinationLink ? `
               <a href="${escapeHtml(pin.destinationLink)}" target="_blank" rel="noopener noreferrer" class="p-pin-link-pill" onclick="event.stopPropagation()">
@@ -66,7 +71,7 @@ export function createFeedUI({ container, onPinClick, onSaveClick }) {
       if (saveBtn) {
         saveBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (onSaveClick) onSaveClick(pin.id, saveBtn);
+          if (onSaveClick) onSaveClick(pin.id);
         });
       }
 
@@ -99,18 +104,40 @@ export function createFeedUI({ container, onPinClick, onSaveClick }) {
     `).join('');
   }
 
+  function renderError(message = 'Failed to load media catalog.', retryHandler = null) {
+    if (!container) return;
+    container.innerHTML = `
+      <div class="p-empty-state p-error-state">
+        <div class="p-empty-icon">⚠️</div>
+        <h2 class="p-empty-title">Connection Error</h2>
+        <p class="p-empty-desc">${escapeHtml(message)}</p>
+        <button class="p-btn-red p-retry-btn" id="pFeedRetryBtn">Try Again</button>
+      </div>
+    `;
+
+    const btn = container.querySelector('#pFeedRetryBtn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (typeof retryHandler === 'function') retryHandler();
+        else if (typeof onRetry === 'function') onRetry();
+      });
+    }
+  }
+
   function updateSaveButtonState(pinId, isSaved) {
     if (!container) return;
     const btns = container.querySelectorAll(`.p-pin-save-btn[data-pin-id="${pinId}"]`);
     btns.forEach(btn => {
       btn.textContent = isSaved ? 'Saved' : 'Save';
       btn.classList.toggle('saved', isSaved);
+      btn.setAttribute('aria-label', isSaved ? 'Unsave pin' : 'Save pin');
     });
   }
 
   return {
     renderPins,
     renderSkeletons,
+    renderError,
     updateSaveButtonState
   };
 }

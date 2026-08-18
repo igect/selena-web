@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Chips
     chipsBar: document.getElementById('pChipsBar'),
-    creatorChips: document.querySelectorAll('.p-chip'),
+    chipsScroll: document.getElementById('pChipsScroll'),
 
     // Sections
     feedSection: document.getElementById('pFeedSection'),
@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     pinsGrid: document.getElementById('pPinGrid'),
     emptyState: document.getElementById('pEmptyState'),
     resetBtn: document.getElementById('pResetBtn'),
+    feedSentinel: document.getElementById('pFeedSentinel'),
 
     // Modals
     pinModal: document.getElementById('pPinModal'),
@@ -85,17 +86,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const feedUI = createFeedUI({
     container: els.pinsGrid,
     onPinClick: (pinId) => router.navigate(`pin/${pinId}`),
-    onSaveClick: (pinId) => store.toggleSave(pinId)
+    onSaveClick: async (pinId) => {
+      const isSaved = await store.toggleSave(pinId);
+      feedUI.updateSaveButtonState(pinId, isSaved);
+      if (pinModalUI.getCurrentPinId() === pinId) {
+        pinModalUI.updateSaveState(isSaved);
+      }
+    },
+    onRetry: () => loadFeedPins()
   });
 
   const pinModalUI = createPinModal({
     modalEl: els.pinModal,
+    getUser: () => store.getState().user,
+    onAuthRequired: () => {
+      showToast('Please log in to participate');
+      openAuth('login');
+    },
     onClose: () => {
       if (store.getState().view === 'pin') {
-        router.navigate('');
+        router.closePin();
       }
     },
-    onSaveClick: (pinId) => store.toggleSave(pinId),
+    onSaveClick: async (pinId) => {
+      const isSaved = await store.toggleSave(pinId);
+      pinModalUI.updateSaveState(isSaved);
+      feedUI.updateSaveButtonState(pinId, isSaved);
+    },
     onReactionClick: (pinId, type) => store.toggleReaction(pinId, type),
     onCreatorClick: (creatorId) => store.toggleFollow(creatorId),
     onRelatedPinClick: (pinId) => router.navigate(`pin/${pinId}`),
@@ -148,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let prevBoard = null;
   let prevFilter = 'all';
   let prevQuery = '';
+  let prevSort = 'newest';
 
   store.subscribe((state) => {
     // Sync Saved Pins Counter Badge
@@ -169,42 +187,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (els.navExplore) els.navExplore.classList.toggle('active', state.view === 'explore');
 
     // Sync Filter Chips
-    els.creatorChips.forEach(chip => {
-      const c = chip.getAttribute('data-creator');
-      const f = chip.getAttribute('data-filter');
-      if (state.activeBoardId) {
-        chip.classList.remove('active');
-      } else if (f) {
-        chip.classList.toggle('active', state.filter === f);
-      } else if (c) {
-        chip.classList.toggle('active', state.activeCreatorId === c && state.filter === 'all');
-      }
-    });
+    syncChipActiveStates(state);
 
     // Profile View Update
     if (state.view === 'profile') {
       profileUI.renderUser(state.user);
-      profileUI.setCounts(
-        state.pins.filter(p => p.userId === state.user?.id).length,
-        state.savedPinIds.length,
-        state.followedCreators.length
-      );
       profileUI.setActiveTab(state.profileTab);
       if (state.profileTab === 'boards') {
         profileUI.renderBoards(state.boards);
       } else {
         profileUI.renderTabPins(state.profileTab, state.savedPinIds, state.user?.id);
       }
+
+      if (state.user) {
+        PinsAPI.fetchPins({ userId: state.user.id, pageSize: 1 }).then(res => {
+          profileUI.setCounts(
+            res.totalCount || 0,
+            state.savedPinIds.length,
+            state.followedCreators.length
+          );
+        }).catch(() => {
+          profileUI.setCounts(0, state.savedPinIds.length, state.followedCreators.length);
+        });
+      } else {
+        profileUI.setCounts(0, state.savedPinIds.length, state.followedCreators.length);
+      }
     }
 
-    // Feed reload trigger
+    // Feed reload trigger (now includes prevSort)
     if (
       state.view === 'home' &&
       (prevView !== 'home' ||
        prevCreator !== state.activeCreatorId ||
        prevBoard !== state.activeBoardId ||
        prevFilter !== state.filter ||
-       prevQuery !== state.query)
+       prevQuery !== state.query ||
+       prevSort !== state.sort)
     ) {
       loadFeedPins();
     }
@@ -214,9 +232,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     prevBoard = state.activeBoardId;
     prevFilter = state.filter;
     prevQuery = state.query;
+    prevSort = state.sort;
   });
 
-  // 7. Feed Pins Loader
+  // 7. Feed Pins Loader & Infinite Scroll
   async function loadFeedPins() {
     const state = store.getState();
     feedUI.renderSkeletons(8);
@@ -234,14 +253,48 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       store.setPins(result.pins, result.totalCount, result.hasMore);
-      feedUI.renderPins(result.pins);
-
-      if (result.pins.length === 0 && els.emptyState) {
-        els.emptyState.hidden = false;
-      }
+      feedUI.renderPins(result.pins, false, state.savedPinIds);
     } catch (err) {
       console.error('[Feed] Failed to load pins:', err);
+      feedUI.renderError('Could not load pins. Please check your connection.', () => loadFeedPins());
     }
+  }
+
+  async function loadMoreFeedPins() {
+    const state = store.getState();
+    if (state.isLoading || !state.hasMore || state.view !== 'home') return;
+
+    store.setLoading(true);
+    store.nextPage();
+    const nextState = store.getState();
+
+    try {
+      const result = await PinsAPI.fetchPins({
+        page: nextState.page,
+        creator: nextState.activeCreatorId,
+        boardId: nextState.activeBoardId,
+        filter: nextState.filter,
+        query: nextState.query,
+        sort: nextState.sort,
+        savedPinIds: nextState.savedPinIds
+      });
+
+      store.setPins(result.pins, result.totalCount, result.hasMore, true);
+      feedUI.renderPins(result.pins, true, nextState.savedPinIds);
+    } catch (err) {
+      console.error('[Feed] Load more error:', err);
+      store.setLoading(false);
+    }
+  }
+
+  // Infinite scroll intersection observer
+  if (els.feedSentinel && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMoreFeedPins();
+      }
+    }, { rootMargin: '400px' });
+    observer.observe(els.feedSentinel);
   }
 
   // 8. Route Transition Handler
@@ -273,16 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       adminUI.loadTable();
     }
 
-    store.setView(view, params);
-
-    if (view === 'home') {
-      if (params.creatorId) store.setCreator(params.creatorId);
-      else if (params.boardId) store.setBoard(params.boardId);
-      else if (params.filter) store.setFilter(params.filter);
-      else if (!params.creatorId && !params.boardId && !params.filter) {
-        store.setCreator('all');
-      }
-    }
+    store.applyRoute(route);
   }
 
   // 9. Auth Modal Controller
@@ -296,8 +340,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submitBtn = document.getElementById('pAuthSubmitBtn');
     const toggleBtn = document.getElementById('pAuthToggleMode');
     const errorEl = document.getElementById('pAuthError');
+    const nameGroup = document.getElementById('pAuthNameGroup');
 
     if (errorEl) errorEl.hidden = true;
+    if (nameGroup) nameGroup.hidden = mode !== 'signup';
     if (title) title.textContent = mode === 'signup' ? 'Create your account' : 'Log In to Selena Archive';
     if (submitBtn) submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Log In';
     if (toggleBtn) {
@@ -337,6 +383,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       const email = document.getElementById('pAuthEmail')?.value?.trim();
       const password = document.getElementById('pAuthPassword')?.value;
+      const name = document.getElementById('pAuthName')?.value?.trim() || '';
       const errorEl = document.getElementById('pAuthError');
       const submitBtn = document.getElementById('pAuthSubmitBtn');
 
@@ -351,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let res;
         if (authMode === 'signup') {
-          res = await AuthAPI.signUp(email, password);
+          res = await AuthAPI.signUp(email, password, name);
           showToast('Account created!');
         } else {
           res = await AuthAPI.signInWithPassword(email, password);
@@ -362,6 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const isAdmin = await AuthAPI.isCurrentUserAdmin();
           store.setUser(res.user, isAdmin);
           updateUserDisplay(res.user, isAdmin);
+          await syncUserSaves(res.user.id);
           closeAuth();
         }
       } catch (err) {
@@ -376,6 +424,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     });
+  }
+
+  async function syncUserSaves(userId) {
+    if (!userId) return;
+    try {
+      const serverSavedIds = await PinsAPI.fetchUserSavedPinIds(userId);
+      const merged = Array.from(new Set([...store.getState().savedPinIds, ...serverSavedIds]));
+      store.setSavedPinIds(merged);
+    } catch (err) {
+      console.warn('[Auth] syncUserSaves failed:', err);
+    }
   }
 
   function updateUserDisplay(user, isAdmin = false) {
@@ -396,7 +455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 10. Navigation Listeners
+  // 10. Navigation & Chip Listeners
   if (els.logoHome) els.logoHome.addEventListener('click', (e) => { e.preventDefault(); router.navigate(''); });
   if (els.navHome) els.navHome.addEventListener('click', () => router.navigate(''));
   if (els.navExplore) els.navExplore.addEventListener('click', () => router.navigate('explore'));
@@ -518,33 +577,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Creator & Filter Chips
-  els.creatorChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      const creator = chip.getAttribute('data-creator');
-      const filter = chip.getAttribute('data-filter');
+  function renderDynamicChips(creators = []) {
+    if (!els.chipsScroll) return;
+    const items = [
+      { type: 'creator', value: 'all', label: 'All' },
+      ...creators.map(c => ({ type: 'creator', value: c.id, label: c.name })),
+      { type: 'filter', value: 'popular', label: 'Trending Ideas' },
+      { type: 'filter', value: 'saved', label: 'Saved Ideas' }
+    ];
 
-      if (filter) {
-        router.navigate(`filter/${filter}`);
-      } else if (creator) {
-        router.navigate(creator === 'all' ? '' : `creator/${creator}`);
+    els.chipsScroll.innerHTML = items.map(it => `
+      <button class="p-chip" data-${it.type}="${it.value}">${escapeHtml(it.label)}</button>
+    `).join('');
+
+    bindChipListeners();
+    syncChipActiveStates(store.getState());
+  }
+
+  function bindChipListeners() {
+    if (!els.chipsScroll) return;
+    els.chipsScroll.querySelectorAll('.p-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const creator = chip.getAttribute('data-creator');
+        const filter = chip.getAttribute('data-filter');
+
+        if (filter) {
+          router.navigate(`filter/${filter}`);
+        } else if (creator) {
+          router.navigate(creator === 'all' ? '' : `creator/${creator}`);
+        }
+      });
+    });
+  }
+
+  function syncChipActiveStates(state) {
+    if (!els.chipsScroll) return;
+    const chips = els.chipsScroll.querySelectorAll('.p-chip');
+    chips.forEach(chip => {
+      const c = chip.getAttribute('data-creator');
+      const f = chip.getAttribute('data-filter');
+      if (state.activeBoardId) {
+        chip.classList.remove('active');
+      } else if (f) {
+        chip.classList.toggle('active', state.filter === f);
+      } else if (c) {
+        chip.classList.toggle('active', state.activeCreatorId === c && state.filter === 'all');
+      }
+    });
+  }
+
+  // Explore Cards Navigation
+  document.querySelectorAll('.p-explore-card').forEach(card => {
+    const handler = () => {
+      const creator = card.getAttribute('data-explore-creator');
+      if (creator) router.navigate(`creator/${creator}`);
+    };
+    card.addEventListener('click', handler);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handler();
       }
     });
   });
 
-  // Explore Cards Navigation
-  document.querySelectorAll('.p-explore-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const creator = card.getAttribute('data-explore-creator');
-      if (creator) router.navigate(`creator/${creator}`);
-    });
-  });
-
-  // 11. Realtime Subscriptions
+  // 11. Debounced Realtime Subscriptions
+  let realtimeDebounce = null;
   subscribeTable('live_pins_feed', 'pins', () => {
-    if (store.getState().view === 'home') {
-      loadFeedPins();
-    }
+    clearTimeout(realtimeDebounce);
+    realtimeDebounce = setTimeout(() => {
+      if (store.getState().view === 'home') {
+        loadFeedPins();
+      }
+    }, 400);
   });
 
   // 12. Toast Helper
@@ -555,6 +660,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       els.toast.hidden = true;
     }, 2500);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   // 13. Application Startup Bootstrap
@@ -568,15 +680,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     store.setUser(user, isAdmin);
     store.setMetadata(creators, boards);
+    renderDynamicChips(creators);
     adminUI.setBoards(boards);
     updateUserDisplay(user, isAdmin);
+
+    if (user) {
+      await syncUserSaves(user.id);
+    }
 
     AuthAPI.onAuthStateChange(async (event, sessionUser) => {
       const isAdm = await AuthAPI.isCurrentUserAdmin();
       store.setUser(sessionUser, isAdm);
       updateUserDisplay(sessionUser, isAdm);
+      if (sessionUser) {
+        await syncUserSaves(sessionUser.id);
+      }
     });
 
+    bindChipListeners();
     router.init();
   } catch (err) {
     console.error('[Bootstrap] Initialization error:', err);
