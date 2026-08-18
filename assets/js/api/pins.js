@@ -209,6 +209,33 @@ export const PinsAPI = {
   },
 
   /**
+   * Fetch real reaction counts for a pin
+   */
+  async fetchReactionCounts(pinId) {
+    const sb = await getSupabase();
+    if (!sb || !pinId) return { love: 0, sparkle: 0, fire: 0 };
+
+    try {
+      const { data, error } = await sb
+        .from('pin_reactions')
+        .select('reaction_type')
+        .eq('pin_id', pinId);
+
+      if (error || !data) return { love: 0, sparkle: 0, fire: 0 };
+
+      const counts = { love: 0, sparkle: 0, fire: 0 };
+      data.forEach(r => {
+        if (counts[r.reaction_type] !== undefined) {
+          counts[r.reaction_type]++;
+        }
+      });
+      return counts;
+    } catch {
+      return { love: 0, sparkle: 0, fire: 0 };
+    }
+  },
+
+  /**
    * Fetch comments for a pin
    */
   async fetchComments(pinId) {

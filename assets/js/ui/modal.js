@@ -22,12 +22,18 @@ export function createPinModal({
   const dateEl = modalEl.querySelector('#pDetailDate');
   const creatorAvatar = modalEl.querySelector('#pDetailCreatorAvatar');
   const creatorName = modalEl.querySelector('#pDetailCreatorName');
+  const creatorFollowers = modalEl.querySelector('#pDetailCreatorFollowers');
   const followBtn = modalEl.querySelector('#pFollowBtn');
   const saveBtn = modalEl.querySelector('#pDetailSaveBtn');
   const downloadBtn = modalEl.querySelector('#pDetailDownloadBtn');
   const shareBtn = modalEl.querySelector('#pDetailShareBtn');
   const destLinkBtn = modalEl.querySelector('#pDetailLinkBtn');
+
   const rxButtons = modalEl.querySelectorAll('.p-reaction-btn');
+  const rxCountLove = modalEl.querySelector('#pRxCountLove');
+  const rxCountSparkle = modalEl.querySelector('#pRxCountSparkle');
+  const rxCountFire = modalEl.querySelector('#pRxCountFire');
+
   const commentsSection = modalEl.querySelector('.p-comments-section');
   const commentInput = modalEl.querySelector('.p-comment-input');
   const commentSendBtn = modalEl.querySelector('.p-comment-send-btn');
@@ -59,7 +65,7 @@ export function createPinModal({
 
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => {
-        if (currentPin?.img) downloadMedia(currentPin.img, `${currentPin.title || 'selena-pin'}.jpg`);
+        if (currentPin?.img) downloadMedia(currentPin.img, `${currentPin.title || 'pin'}.jpg`);
       });
     }
 
@@ -70,10 +76,11 @@ export function createPinModal({
     }
 
     rxButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const reactionType = btn.getAttribute('data-reaction');
-        if (currentPin && onReactionClick) {
-          onReactionClick(currentPin.id, reactionType);
+      btn.addEventListener('click', async () => {
+        const type = btn.getAttribute('data-reaction');
+        if (currentPin && onReactionClick && type) {
+          await onReactionClick(currentPin.id, type);
+          loadReactionCounts(currentPin.id);
         }
       });
     });
@@ -117,9 +124,20 @@ export function createPinModal({
     if (creatorAvatar) creatorAvatar.src = pin.creatorAvatar || 'assets/images/logo.png';
     if (creatorName) creatorName.textContent = pin.creatorName || 'Creator';
 
+    if (creatorFollowers) {
+      if (pin.creatorFollowers && pin.creatorFollowers > 0) {
+        creatorFollowers.textContent = `${formatNumber(pin.creatorFollowers)} followers`;
+        creatorFollowers.hidden = false;
+      } else {
+        creatorFollowers.textContent = '';
+        creatorFollowers.hidden = true;
+      }
+    }
+
     updateSaveState(isSaved);
     updateFollowState(isFollowing);
     updateReactionsState(activeReactions);
+    loadReactionCounts(pin.id);
 
     if (destLinkBtn) {
       if (pin.destinationLink) {
@@ -162,11 +180,24 @@ export function createPinModal({
     });
   }
 
+  async function loadReactionCounts(pinId) {
+    try {
+      const counts = await PinsAPI.fetchReactionCounts(pinId);
+      if (rxCountLove) rxCountLove.textContent = counts.love || 0;
+      if (rxCountSparkle) rxCountSparkle.textContent = counts.sparkle || 0;
+      if (rxCountFire) rxCountFire.textContent = counts.fire || 0;
+    } catch {
+      if (rxCountLove) rxCountLove.textContent = 0;
+      if (rxCountSparkle) rxCountSparkle.textContent = 0;
+      if (rxCountFire) rxCountFire.textContent = 0;
+    }
+  }
+
   async function loadComments(pinId) {
     if (!commentsSection) return;
     try {
       const comments = await PinsAPI.fetchComments(pinId);
-      const header = '<span class="p-comments-title">Comments</span>';
+      const header = `<span class="p-comments-title">Comments (${comments.length})</span>`;
       if (comments.length === 0) {
         commentsSection.innerHTML = header + '<p class="p-no-comments">No comments yet. Share your thoughts!</p>';
         return;
@@ -181,7 +212,7 @@ export function createPinModal({
         </div>
       `).join('') + '</div>';
     } catch {
-      commentsSection.innerHTML = '<span class="p-comments-title">Comments</span>';
+      commentsSection.innerHTML = '<span class="p-comments-title">Comments (0)</span>';
     }
   }
 
@@ -228,6 +259,13 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function formatNumber(num) {
+  if (!num || isNaN(num)) return '0';
+  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return num.toString();
+}
+
 function downloadMedia(url, filename) {
   const a = document.createElement('a');
   a.href = url;
@@ -243,11 +281,9 @@ async function shareMedia(pin) {
   if (navigator.share) {
     try {
       await navigator.share({ title: pin.title, url });
-      return;
     } catch {}
-  }
-  if (navigator.clipboard) {
+  } else if (navigator.clipboard) {
     await navigator.clipboard.writeText(url);
-    alert('Pin link copied to clipboard!');
+    alert('Link copied to clipboard!');
   }
 }

@@ -151,6 +151,9 @@ export function createPinModalUI({
         const destinationLink = linkInput?.value?.trim() || null;
         const user = typeof getUser === 'function' ? getUser() : null;
 
+        const creatorSelect = document.getElementById('pCreateCreator');
+        const creatorId = creatorSelect?.value || 'yamu';
+
         try {
           submitBtn.disabled = true;
           submitBtn.textContent = 'Publishing...';
@@ -158,8 +161,8 @@ export function createPinModalUI({
           const pinData = {
             title,
             description,
-            creator: 'rose',
-            creatorId: 'rose',
+            creator: creatorId,
+            creatorId: creatorId,
             boardId: selectedBoardId,
             userId: user?.id || null,
             destinationLink
@@ -231,6 +234,13 @@ export function createPinModalUI({
     if (titleInput) titleInput.value = '';
     if (descInput) descInput.value = '';
     if (linkInput) linkInput.value = '';
+
+    const creatorSelect = document.getElementById('pCreateCreator');
+    if (creatorSelect && creators && creators.length > 0) {
+      creatorSelect.innerHTML = creators.map(c => `
+        <option value="${c.id}">${escapeHtml(c.name)}</option>
+      `).join('');
+    }
 
     currentBoards = boards || [];
     selectedBoardId = null;

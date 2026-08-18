@@ -84,4 +84,9 @@ describe('PinsAPI Module Suite', () => {
     });
     assert.deepEqual(pin2.tags, []);
   });
+
+  it('returns clean zero reaction counts when uninitialized', async () => {
+    const counts = await PinsAPI.fetchReactionCounts(null);
+    assert.deepEqual(counts, { love: 0, sparkle: 0, fire: 0 });
+  });
 });

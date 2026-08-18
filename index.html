@@ -419,6 +419,15 @@
 
           <!-- Form Fields -->
           <div class="p-create-fields">
+            <div class="p-creator-select-wrapper">
+              <label for="pCreateCreator" class="p-field-label">Creator Collection</label>
+              <select id="pCreateCreator" class="p-select-creator">
+                <option value="yamu">Yamu</option>
+                <option value="rose">Rosé</option>
+                <option value="sharly">Sharly Modak</option>
+              </select>
+            </div>
+
             <input type="text" id="pCreateTitle" placeholder="Add your title" class="p-input-title" required>
             <textarea id="pCreateDesc" placeholder="Tell everyone what your Pin is about..." class="p-input-desc" rows="3"></textarea>
             <input type="url" id="pCreateLink" placeholder="Add a destination link (optional)" class="p-input-link">
@@ -485,8 +494,8 @@
                 <img id="pDetailCreatorAvatar" src="assets/images/logo.png" alt="Creator">
               </div>
               <div class="p-creator-info">
-                <span id="pDetailCreatorName" class="p-creator-name">Rosé</span>
-                <span class="p-creator-followers">1.4M followers</span>
+                <span id="pDetailCreatorName" class="p-creator-name">Creator</span>
+                <span id="pDetailCreatorFollowers" class="p-creator-followers"></span>
               </div>
               <button class="p-btn-follow" id="pFollowBtn">Follow</button>
             </div>
@@ -495,9 +504,9 @@
             <div class="p-reactions-panel">
               <span class="p-reactions-title">Reactions</span>
               <div class="p-reactions-list">
-                <button class="p-reaction-btn" data-reaction="love">❤️ <span class="rx-num">312</span></button>
-                <button class="p-reaction-btn" data-reaction="sparkle">✨ <span class="rx-num">194</span></button>
-                <button class="p-reaction-btn" data-reaction="fire">🔥 <span class="rx-num">128</span></button>
+                <button class="p-reaction-btn" data-reaction="love" aria-label="Love reaction">❤️ <span class="rx-num" id="pRxCountLove">0</span></button>
+                <button class="p-reaction-btn" data-reaction="sparkle" aria-label="Sparkle reaction">✨ <span class="rx-num" id="pRxCountSparkle">0</span></button>
+                <button class="p-reaction-btn" data-reaction="fire" aria-label="Fire reaction">🔥 <span class="rx-num" id="pRxCountFire">0</span></button>
               </div>
             </div>
 
