@@ -1,23 +1,6 @@
 {
   "items": [
     {
-      "id": "rose-1",
-      "title": "Rosé — Crimson Silk Dress & Ambient Cafe #1",
-      "creator": "rose",
-      "creatorName": "Rosé",
-      "category": "photo",
-      "date": "2026-07-27",
-      "img": "assets/images/archive/rose/rose_0001.jpg",
-      "board": "Rosé Collection",
-      "description": "Curated visual pin from the Rosé Collection. Featuring photography of Rosé with elegant tones, composition, and aesthetic details.",
-      "tags": [
-        "fashion",
-        "portrait",
-        "aesthetic",
-        "editorial"
-      ]
-    },
-    {
       "id": "rose-2",
       "title": "Rosé — Birthday Celebration in Gold & Noir #2",
       "creator": "rose",
@@ -42,23 +25,6 @@
       "category": "photo",
       "date": "2026-07-27",
       "img": "assets/images/archive/rose/rose_0003.jpg",
-      "board": "Rosé Collection",
-      "description": "Curated visual pin from the Rosé Collection. Featuring photography of Rosé with elegant tones, composition, and aesthetic details.",
-      "tags": [
-        "fashion",
-        "portrait",
-        "aesthetic",
-        "editorial"
-      ]
-    },
-    {
-      "id": "rose-4",
-      "title": "Rosé — Golden Hour Sunlight & Soft Drapes #4",
-      "creator": "rose",
-      "creatorName": "Rosé",
-      "category": "photo",
-      "date": "2026-07-27",
-      "img": "assets/images/archive/rose/rose_0004.jpg",
       "board": "Rosé Collection",
       "description": "Curated visual pin from the Rosé Collection. Featuring photography of Rosé with elegant tones, composition, and aesthetic details.",
       "tags": [
@@ -103,48 +69,12 @@
         "glamour",
         "festive"
       ]
-    },
-    {
-      "id": "sharly-3",
-      "title": "Sharly Modak — Classic Bengal Handloom Saree Portrait #84",
-      "creator": "sharly",
-      "creatorName": "Sharly Modak",
-      "category": "photo",
-      "date": "2026-07-29",
-      "img": "assets/images/archive/sharly/sharly_0003.jpg",
-      "board": "Sharly Modak Board",
-      "description": "Curated visual pin from the Sharly Modak Board. Featuring photography of Sharly Modak with elegant tones, composition, and aesthetic details.",
-      "tags": [
-        "traditional",
-        "saree",
-        "tollywood",
-        "glamour",
-        "festive"
-      ]
-    },
-    {
-      "id": "sharly-4",
-      "title": "Sharly Modak — Festive Diya Lights & Silk Drape #85",
-      "creator": "sharly",
-      "creatorName": "Sharly Modak",
-      "category": "photo",
-      "date": "2026-07-29",
-      "img": "assets/images/archive/sharly/sharly_0004.jpg",
-      "board": "Sharly Modak Board",
-      "description": "Curated visual pin from the Sharly Modak Board. Featuring photography of Sharly Modak with elegant tones, composition, and aesthetic details.",
-      "tags": [
-        "traditional",
-        "saree",
-        "tollywood",
-        "glamour",
-        "festive"
-      ]
     }
   ],
   "counts": {
-    "all": 8,
-    "rose": 4,
-    "sharly": 4,
+    "all": 4,
+    "rose": 2,
+    "sharly": 2,
     "yamu": 0
   }
 }
