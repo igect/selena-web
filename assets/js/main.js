@@ -626,20 +626,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Explore Cards Navigation
-  document.querySelectorAll('.p-explore-card').forEach(card => {
-    const handler = () => {
+  function renderExploreCards(creators = [], boards = []) {
+    const grid = document.getElementById('pExploreGrid');
+    if (!grid) return;
+
+    if (!creators.length && !boards.length) {
+      grid.innerHTML = '<p class="p-empty-tab">No curated collections found.</p>';
+      return;
+    }
+
+    const cards = [];
+
+    // Render creators dynamically as explore spotlight cards
+    creators.forEach(c => {
+      const isFeatured = c.is_featured || (c.follower_count && c.follower_count > 100000);
+      const tag = isFeatured ? 'Featured Collection' : 'Trending Showcase';
+      const subtitle = c.bio || `${c.name} Aesthetic & Media`;
+      const imgUrl = c.avatar_url || 'assets/images/logo.png';
+
+      cards.push(`
+        <div class="p-explore-card" data-explore-creator="${c.id}" tabindex="0" role="button" aria-label="Explore ${escapeHtml(c.name)} Collection">
+          <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(c.name)}" class="p-explore-img" loading="lazy" />
+          <div class="p-explore-card-overlay">
+            <span class="p-explore-tag">${tag}</span>
+            <h3>${escapeHtml(c.name)}</h3>
+            <p>${escapeHtml(subtitle)} &rarr;</p>
+          </div>
+        </div>
+      `);
+    });
+
+    grid.innerHTML = cards.join('');
+  }
+
+  // Explore Cards Event Delegation
+  const exploreGrid = document.getElementById('pExploreGrid');
+  if (exploreGrid) {
+    const handleExploreNav = (target) => {
+      const card = target.closest('.p-explore-card');
+      if (!card) return;
       const creator = card.getAttribute('data-explore-creator');
+      const board = card.getAttribute('data-explore-board');
       if (creator) router.navigate(`creator/${creator}`);
+      else if (board) router.navigate(`board/${board}`);
     };
-    card.addEventListener('click', handler);
-    card.addEventListener('keydown', (e) => {
+
+    exploreGrid.addEventListener('click', (e) => handleExploreNav(e.target));
+    exploreGrid.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        handler();
+        handleExploreNav(e.target);
       }
     });
-  });
+  }
 
   // 11. Debounced Realtime Subscriptions
   let realtimeDebounce = null;
@@ -681,6 +720,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     store.setUser(user, isAdmin);
     store.setMetadata(creators, boards);
     renderDynamicChips(creators);
+    renderExploreCards(creators, boards);
     adminUI.setBoards(boards);
     updateUserDisplay(user, isAdmin);
 
