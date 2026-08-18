@@ -2020,6 +2020,24 @@ button {
     padding: 28px 20px;
   }
 
+  /* Dense 2-column mobile pin grid */
+  .p-masonry-grid {
+    column-width: 150px;
+    column-gap: 8px;
+  }
+  .p-main-view {
+    padding: 0 8px;
+  }
+  :root {
+    --radius-pin: 12px;
+  }
+  .p-pin-card {
+    margin-bottom: 8px;
+  }
+  .p-pin-info {
+    padding: 6px 2px 2px 2px;
+  }
+
   /* Admin scaling */
   .p-admin-section {
     padding: 0 12px;
@@ -2030,6 +2048,15 @@ button {
   .p-admin-title-row {
     flex-wrap: wrap;
     gap: 12px;
+  }
+}
+
+/* Touch device persistent save button */
+@media (hover: none) and (pointer: coarse) {
+  .p-pin-overlay {
+    opacity: 1;
+    background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.05) 0%, transparent 35%, transparent 65%, rgba(0, 0, 0, 0.4) 100%);
   }
 }
 
