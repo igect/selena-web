@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting — Selena Media Archive</title>
+  <script>
+    // Single Page Application redirect script for GitHub Pages
+    // Converts direct path requests into query parameters that index.html resolves into client-side routes.
+    (function () {
+      var pathSegmentsToKeep = 0; // 0 for custom subdomains, 1 for <username>.github.io/<repo>/
+      var l = window.location;
+      var repoOffset = l.pathname.split('/').filter(Boolean).length;
+      
+      // If deployed on custom domain (archive.example.com), pathSegmentsToKeep is 0
+      var isCustomDomain = !l.hostname.endsWith('github.io');
+      var keep = isCustomDomain ? 0 : 1;
+
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + keep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(keep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting to archive...</p>
+</body>
+</html>

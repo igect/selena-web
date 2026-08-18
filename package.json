@@ -1,0 +1,23 @@
+{
+  "name": "selena-web",
+  "version": "2.0.0",
+  "description": "Selena — Luxury Editorial Media Archive & Portfolio",
+  "main": "assets/js/main.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "portfolio",
+    "media",
+    "archive",
+    "luxury-editorial",
+    "gallery"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@total-typescript/shoehorn": "^0.1.2"
+  }
+}

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinterest</title>
+  <meta name="description" content="Discover recipes, home ideas, style inspiration and other ideas to try on Pinterest.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Pinterest Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Pinterest Top Navigation Bar -->
+  <header class="p-header" id="pHeader">
+    <div class="p-header-left">
+      <!-- Website Logo -->
+      <a href="#" class="p-logo" id="pLogoHome" aria-label="Home">
+        <img src="assets/images/logo.png" alt="Pinterest Logo" class="p-logo-img">
+      </a>
+
+      <!-- Primary Nav Buttons -->
+      <button class="p-nav-btn active" id="pNavHome">Home</button>
+      <button class="p-nav-btn" id="pNavExplore">Explore</button>
+      <button class="p-nav-btn" id="pNavCreateBtn">
+        <span>Create</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- Center Search Bar -->
+    <div class="p-header-center">
+      <div class="p-search-container">
+        <svg class="p-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input type="text" id="pSearchInput" placeholder="Search for ideas, aesthetics, creators..." autocomplete="off" aria-label="Search">
+        <button id="pSearchClear" class="p-search-clear" hidden aria-label="Clear Search">&times;</button>
+      </div>
+    </div>
+
+    <!-- Right User Menu Actions -->
+    <div class="p-header-right">
+      <!-- Notifications Bell -->
+      <div class="p-popover-anchor">
+        <button class="p-icon-btn" id="pNotifBtn" title="Notifications" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 24c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6.8-6.1V11c0-3.1-1.6-5.6-4.5-6.3V4c0-.8-.7-1.5-1.5-1.5s-1.5.7-1.5 1.5v.7C8.4 5.4 6.8 7.9 6.8 11v6.9L5 19.7v1.3h14v-1.3l-1.8-1.8z"/>
+          </svg>
+          <span class="p-badge-dot"></span>
+        </button>
+
+        <!-- Notifications Dropdown Popover -->
+        <div class="p-dropdown-panel" id="pNotifPanel" hidden>
+          <div class="p-panel-header">
+            <h3>Updates</h3>
+          </div>
+          <div class="p-panel-list">
+            <div class="p-panel-item">
+              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
+              <div class="p-item-text">
+                <strong>Rosé</strong> published new pins in Studio Collection.
+                <span class="p-item-time">2h ago</span>
+              </div>
+            </div>
+            <div class="p-panel-item">
+              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
+              <div class="p-item-text">
+                <strong>Sharly Modak</strong> is trending on Pinterest today.
+                <span class="p-item-time">5h ago</span>
+              </div>
+            </div>
+            <div class="p-panel-item">
+              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
+              <div class="p-item-text">
+                Your board <strong>Aesthetic Favorites</strong> has new impressions.
+                <span class="p-item-time">1d ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages / Inbox -->
+      <div class="p-popover-anchor">
+        <button class="p-icon-btn" id="pInboxBtn" title="Messages" aria-label="Messages">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18 0H6C2.7 0 0 2.7 0 6v9c0 3.3 2.7 6 6 6h1v3l4-3h7c3.3 0 6-2.7 6-6V6c0-3.3-2.7-6-6-6zm-4 12H6v-2h8v2zm4-4H6V6h12v2z"/>
+          </svg>
+        </button>
+
+        <!-- Inbox Dropdown Popover -->
+        <div class="p-dropdown-panel" id="pInboxPanel" hidden>
+          <div class="p-panel-header">
+            <h3>Inbox</h3>
+          </div>
+          <div class="p-panel-list">
+            <div class="p-panel-item unread">
+              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
+              <div class="p-item-text">
+                <strong>Pinterest Team</strong>
+                <p>Welcome to your home feed! Explore aesthetic pins and save to boards.</p>
+                <span class="p-item-time">Just now</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Pins Filter Button -->
+      <button class="p-icon-btn" id="pSavedBtn" title="Saved Pins" aria-label="Saved Pins">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span id="pSavedBadge" class="p-badge" hidden>0</span>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button class="p-icon-btn" id="pThemeBtn" title="Toggle Theme" aria-label="Toggle Theme">
+        <svg class="p-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+        <svg class="p-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      <!-- Profile Avatar Button -->
+      <button class="p-avatar-btn" id="pProfileBtn" title="Your Profile" aria-label="Profile">
+        <div class="p-avatar-circle">
+          <img src="assets/images/logo.png" alt="Profile" class="p-avatar-img">
+        </div>
+      </button>
+    </div>
+  </header>
+
+  <!-- Pinterest Ideas Filter Chips -->
+  <section class="p-chips-bar" id="pChipsBar">
+    <div class="p-chips-scroll">
+      <button class="p-chip active" data-creator="all">All</button>
+      <button class="p-chip" data-creator="rose">Rosé</button>
+      <button class="p-chip" data-creator="sharly">Sharly Modak</button>
+      <button class="p-chip" data-creator="yamu">Yamu</button>
+      <button class="p-chip" data-filter="popular">Trending Ideas</button>
+      <button class="p-chip" data-filter="saved">Saved Ideas</button>
+    </div>
+  </section>
+
+  <!-- Main View Container: Feed vs Explore vs Profile -->
+  <main class="p-main-view">
+
+    <!-- 1. Pinterest Home Feed Section -->
+    <section class="p-feed-section" id="pFeedSection">
+      <!-- Feed Sort Bar -->
+      <div class="p-feed-header">
+        <div></div>
+        <div class="p-sort-box">
+          <button id="pSortBtn" class="p-sort-btn">
+            <span id="pSortLabel">For you</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div id="pSortMenu" class="p-sort-dropdown" hidden>
+            <button class="p-sort-item active" data-sort="newest">For you</button>
+            <button class="p-sort-item" data-sort="popular">Most Saved</button>
+            <button class="p-sort-item" data-sort="oldest">Oldest</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Authentic Pinterest Masonry Pin Grid -->
+      <div class="p-masonry-grid" id="pPinGrid" aria-live="polite">
+        <!-- Rendered reactively by bundle.js -->
+      </div>
+
+      <!-- Empty Feed State -->
+      <div id="pEmptyState" class="p-empty-state" hidden>
+        <div class="p-empty-icon">🔍</div>
+        <h2 class="p-empty-title">No Pins Found</h2>
+        <p class="p-empty-desc">We couldn't find any pins matching your active search or filters.</p>
+        <button id="pResetBtn" class="p-btn-red">Explore all Pins</button>
+      </div>
+    </section>
+
+    <!-- 2. Pinterest Explore / Today Hub Section -->
+    <section class="p-explore-section" id="pExploreSection" hidden>
+      <div class="p-explore-header">
+        <span class="p-today-badge">TODAY ON PINTEREST</span>
+        <h1 class="p-explore-title">Curated Aesthetics & Inspo</h1>
+        <p class="p-explore-sub">Browse trending boards and ideas curated for your aesthetic feed.</p>
+      </div>
+
+      <!-- Explore Spotlight Boards Grid -->
+      <div class="p-explore-grid">
+        <div class="p-explore-card" data-explore-creator="rose">
+          <img src="assets/images/archive/rose/rose_0001.jpg" alt="" class="p-explore-img">
+          <div class="p-explore-card-overlay">
+            <span class="p-explore-tag">Featured Board</span>
+            <h3>Rosé: High Fashion & Film</h3>
+            <p>Explore collection &rarr;</p>
+          </div>
+        </div>
+
+        <div class="p-explore-card" data-explore-creator="sharly">
+          <img src="assets/images/archive/sharly/sharly_0001.jpg" alt="" class="p-explore-img">
+          <div class="p-explore-card-overlay">
+            <span class="p-explore-tag">Trending Topic</span>
+            <h3>Sharly Modak: Crimson & Gold</h3>
+            <p>Explore collection &rarr;</p>
+          </div>
+        </div>
+
+        <div class="p-explore-card" data-explore-creator="yamu">
+          <img src="assets/images/archive/yamu/yamu_0001.jpg" alt="" class="p-explore-img">
+          <div class="p-explore-card-overlay">
+            <span class="p-explore-tag">Visual Mood</span>
+            <h3>Yamu: Tokyo & Snow Series</h3>
+            <p>Explore collection &rarr;</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Pinterest User Profile View Section -->
+    <section class="p-profile-section" id="pProfileSection" hidden>
+      <div class="p-profile-header">
+        <div class="p-profile-avatar-large">
+          <img src="assets/images/logo.png" alt="User Profile">
+        </div>
+        <h1 class="p-profile-name">Selena Collector</h1>
+        <span class="p-profile-handle">@selenaofficial</span>
+        
+        <div class="p-profile-stats">
+          <span><strong>1.6k</strong> Pins</span>
+          <span><strong>342</strong> Followers</span>
+          <span><strong>89</strong> Following</span>
+        </div>
+
+        <div class="p-profile-actions">
+          <button class="p-btn-secondary" id="pShareProfileBtn">Share</button>
+          <button class="p-btn-secondary" id="pEditProfileBtn">Edit profile</button>
+        </div>
+
+        <!-- Profile Tabs: Boards vs Saved vs Created -->
+        <div class="p-profile-tabs">
+          <button class="p-tab-btn active" id="pTabBoards">Saved Boards</button>
+          <button class="p-tab-btn" id="pTabSaved">All Saved</button>
+          <button class="p-tab-btn" id="pTabCreated">Created</button>
+        </div>
+      </div>
+
+      <div class="p-profile-content">
+        <!-- Boards Grid -->
+        <div class="p-profile-boards-grid" id="pProfileBoardsGrid">
+          <div class="p-board-card" data-board-creator="rose">
+            <div class="p-board-preview">
+              <img src="assets/images/archive/rose/rose_0001.jpg" alt="">
+              <img src="assets/images/archive/rose/rose_0002.jpg" alt="">
+              <img src="assets/images/archive/rose/rose_0003.jpg" alt="">
+            </div>
+            <div class="p-board-meta">
+              <h4>Rosé Collection</h4>
+              <span>Curated Board · View pins</span>
+            </div>
+          </div>
+
+          <div class="p-board-card" data-board-creator="sharly">
+            <div class="p-board-preview">
+              <img src="assets/images/archive/sharly/sharly_0001.jpg" alt="">
+              <img src="assets/images/archive/sharly/sharly_0002.jpg" alt="">
+              <img src="assets/images/archive/sharly/sharly_0003.jpg" alt="">
+            </div>
+            <div class="p-board-meta">
+              <h4>Sharly Modak Board</h4>
+              <span>Curated Board · View pins</span>
+            </div>
+          </div>
+
+          <div class="p-board-card" data-board-creator="yamu">
+            <div class="p-board-preview">
+              <img src="assets/images/archive/yamu/yamu_0001.jpg" alt="">
+              <img src="assets/images/archive/yamu/yamu_0002.jpg" alt="">
+              <img src="assets/images/archive/yamu/yamu_0003.jpg" alt="">
+            </div>
+            <div class="p-board-meta">
+              <h4>Yamu Aesthetics</h4>
+              <span>Curated Board · View pins</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Pins Grid for Saved / Created -->
+        <div class="p-masonry-grid" id="pProfileGrid" hidden>
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+ 
+    <!-- 4. Selena Admin CMS Section -->
+    <section class="p-admin-section" id="pAdminSection" hidden>
+      <div class="p-admin-header">
+        <div class="p-admin-title-row">
+          <div>
+            <span class="p-admin-badge">ADMINISTRATION</span>
+            <h1 class="p-admin-heading">Archive Content Management</h1>
+          </div>
+          <div class="p-admin-top-actions">
+            <button class="p-btn-red" id="pAdminNewPinBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Create Pin</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metrics Cards Container -->
+        <div class="p-admin-metrics-grid" id="pAdminMetrics">
+          <!-- Injected dynamically by admin-panel.js -->
+        </div>
+      </div>
+
+      <!-- Admin Pin Management Controls & Table -->
+      <div class="p-admin-table-card">
+        <div class="p-admin-filter-bar">
+          <div class="p-admin-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="pAdminSearch" placeholder="Search archive by title...">
+          </div>
+
+          <div class="p-admin-filters">
+            <select id="pAdminCreatorFilter" class="p-admin-select" aria-label="Filter Creator">
+              <option value="all">All Creators</option>
+              <option value="rose">Rosé</option>
+              <option value="sharly">Sharly Modak</option>
+              <option value="yamu">Yamu</option>
+            </select>
+
+            <select id="pAdminStatusFilter" class="p-admin-select" aria-label="Filter Status">
+              <option value="all">All Statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Drafts</option>
+              <option value="featured">Featured</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Batch Actions Floating Bar -->
+        <div class="p-admin-batch-bar" id="pAdminBatchToolbar" hidden>
+          <span class="p-batch-count">0 selected</span>
+          <div class="p-batch-actions">
+            <button class="p-btn-secondary-sm" id="pAdminBatchPublish">Publish</button>
+            <button class="p-btn-secondary-sm" id="pAdminBatchDraft">Unpublish</button>
+            <button class="p-btn-danger-sm" id="pAdminBatchDelete">Delete</button>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="p-table-responsive">
+          <table class="p-admin-table">
+            <thead>
+              <tr>
+                <th class="p-col-check"><input type="checkbox" id="pAdminSelectAll" aria-label="Select All"></th>
+                <th class="p-col-thumb">Media</th>
+                <th class="p-col-title">Title & Details</th>
+                <th class="p-col-creator">Creator</th>
+                <th class="p-col-board">Board</th>
+                <th class="p-col-status">Status</th>
+                <th class="p-col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pAdminTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="p-admin-pagination">
+          <span id="pAdminPaginationInfo" class="p-page-info">Page 1 of 1</span>
+          <div class="p-page-btns">
+            <button id="pAdminPrevPage" class="p-btn-secondary-sm" disabled>&larr; Previous</button>
+            <button id="pAdminNextPage" class="p-btn-secondary-sm">Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Pinterest Create Pin Modal -->
+  <div id="pCreateModal" class="p-modal-backdrop" hidden role="dialog" aria-modal="true" aria-label="Create Pin">
+    <div class="p-modal-scrim" id="pCreateScrim"></div>
+
+    <div class="p-modal-container p-create-container">
+      <button class="p-btn-close-modal" id="pCloseCreateBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <div class="p-create-card">
+        <div class="p-create-top">
+          <h2>Create Pin</h2>
+          <div class="p-create-top-actions">
+            <div class="p-board-picker-anchor">
+              <button type="button" class="p-board-select-btn" id="pBoardSelectBtn">
+                <span id="pSelectedBoardLabel">Choose a board</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+
+              <!-- Pinterest Board Dropdown & Inline Board Creator -->
+              <div class="p-board-dropdown-menu" id="pBoardDropdown" hidden>
+                <div class="p-board-search-box">
+                  <input type="text" id="pBoardSearchInput" placeholder="Search boards...">
+                </div>
+                <div class="p-board-list" id="pBoardList">
+                  <!-- Injected dynamically -->
+                </div>
+                <button type="button" class="p-btn-create-board" id="pOpenInlineBoardBtn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                  <span>Create board</span>
+                </button>
+
+                <!-- Inline Create Board Form -->
+                <div class="p-inline-board-form" id="pInlineBoardForm" hidden>
+                  <input type="text" id="pNewBoardNameInput" placeholder="e.g. Summer Outfits" maxlength="50">
+                  <div class="p-inline-board-btns">
+                    <button type="button" class="p-btn-secondary-sm" id="pCancelNewBoardBtn">Cancel</button>
+                    <button type="button" class="p-btn-primary-sm" id="pSaveNewBoardBtn">Create</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="p-save-btn" id="pSubmitPinBtn">Publish</button>
+          </div>
+        </div>
+
+        <div class="p-create-body">
+          <!-- Dropzone -->
+          <div class="p-dropzone" id="pDropzone">
+            <input type="file" id="pFileInput" accept="image/*" hidden>
+            <div class="p-drop-placeholder" id="pDropPlaceholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <p><strong>Choose a file</strong> or drag and drop it here</p>
+              <span class="p-drop-hint">High quality .jpg or .png recommended</span>
+            </div>
+            <div class="p-preview-wrapper" id="pPreviewWrapper" hidden>
+              <img id="pUploadPreview" class="p-upload-img" alt="Preview">
+              <button type="button" class="p-btn-remove-preview" id="pRemovePreviewBtn" title="Remove image">&times;</button>
+            </div>
+          </div>
+
+          <!-- Form Fields -->
+          <div class="p-create-fields">
+            <input type="text" id="pCreateTitle" placeholder="Add your title" class="p-input-title" required>
+            <textarea id="pCreateDesc" placeholder="Tell everyone what your Pin is about..." class="p-input-desc" rows="3"></textarea>
+            <input type="url" id="pCreateLink" placeholder="Add a destination link (optional)" class="p-input-link">
+            
+            <div class="p-tags-section">
+              <label>Tagged topics</label>
+              <div class="p-tags-quick-pills">
+                <button type="button" class="p-tag-pill" data-tag="Photography">Photography</button>
+                <button type="button" class="p-tag-pill" data-tag="Fashion">Fashion</button>
+                <button type="button" class="p-tag-pill" data-tag="Portrait">Portrait</button>
+                <button type="button" class="p-tag-pill" data-tag="Aesthetic">Aesthetic</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pinterest Split Pin Close-up Modal -->
+  <div id="pPinModal" class="p-modal-backdrop" hidden role="dialog" aria-modal="true" aria-label="Pin Close-up">
+    <div class="p-modal-scrim" id="pModalScrim"></div>
+
+    <div class="p-modal-container">
+      <button class="p-btn-close-modal" id="pCloseModalBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <div class="p-pin-detail-card">
+        
+        <!-- Left Photo Stage -->
+        <div class="p-detail-media">
+          <img id="pDetailImg" src="" alt="" class="p-detail-img">
+        </div>
+
+        <!-- Right Pin Information Column -->
+        <div class="p-detail-content">
+          
+          <!-- Top Action Bar -->
+          <div class="p-detail-top">
+            <div class="p-detail-left-icons">
+              <button class="p-action-circle" id="pDetailShareBtn" title="Share Pin" aria-label="Share">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+              </button>
+              <button class="p-action-circle" id="pDetailDownloadBtn" title="Download Image" aria-label="Download Image">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              </button>
+            </div>
+            <button class="p-save-btn" id="pDetailSaveBtn">Save</button>
+          </div>
+
+          <!-- Pin Details & Creator -->
+          <div class="p-detail-scrollable">
+            <h1 id="pDetailTitle" class="p-pin-heading">Pin Title</h1>
+            <p id="pDetailDesc" class="p-pin-description">Pin Description</p>
+            <p id="pDetailDate" class="p-pin-meta">Saved to Board</p>
+
+            <!-- Creator Profile Attribution Row -->
+            <div class="p-creator-row">
+              <div class="p-creator-avatar">
+                <img id="pDetailCreatorAvatar" src="assets/images/logo.png" alt="Creator">
+              </div>
+              <div class="p-creator-info">
+                <span id="pDetailCreatorName" class="p-creator-name">Rosé</span>
+                <span class="p-creator-followers">1.4M followers</span>
+              </div>
+              <button class="p-btn-follow" id="pFollowBtn">Follow</button>
+            </div>
+
+            <!-- Reactions Section -->
+            <div class="p-reactions-panel">
+              <span class="p-reactions-title">Reactions</span>
+              <div class="p-reactions-list">
+                <button class="p-reaction-btn" data-reaction="love">❤️ <span class="rx-num">312</span></button>
+                <button class="p-reaction-btn" data-reaction="sparkle">✨ <span class="rx-num">194</span></button>
+                <button class="p-reaction-btn" data-reaction="fire">🔥 <span class="rx-num">128</span></button>
+              </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="p-comments-section">
+              <span class="p-comments-title">Comments</span>
+              <div class="p-comment-item">
+                <div class="p-comment-avatar">
+                  <img src="assets/images/logo.png" alt="">
+                </div>
+                <div class="p-comment-body">
+                  <span class="p-comment-user">alex_curates</span>
+                  <p class="p-comment-text">Stunning aesthetic and perfect portrait lighting!</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- More Like This / Related Pins Section -->
+            <div class="p-related-pins-section">
+              <span class="p-related-heading">More like this</span>
+              <div class="p-related-pins-grid">
+                <!-- Injected dynamically -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Add Comment Input -->
+          <div class="p-detail-footer">
+            <div class="p-add-comment">
+              <input type="text" placeholder="Add a comment..." class="p-comment-input">
+              <button class="p-comment-send-btn" aria-label="Send">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Admin Create / Edit Drawer Modal -->
+  <div id="pAdminDrawerModal" class="p-modal-backdrop" hidden role="dialog" aria-modal="true" aria-label="Admin Edit Drawer">
+    <div class="p-modal-scrim" id="pAdminDrawerScrim"></div>
+    <div class="p-modal-container p-admin-drawer-container">
+      <button class="p-btn-close-modal" id="pAdminCloseDrawer" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <form id="pAdminDrawerForm" class="p-admin-drawer-card">
+        <h2 id="pAdminDrawerTitle">Create New Pin</h2>
+        
+        <div class="p-admin-drawer-body">
+          <!-- Dropzone -->
+          <div class="p-dropzone" id="pAdminDropzone">
+            <input type="file" id="pAdminFileInput" accept="image/*" hidden>
+            <div class="p-drop-placeholder">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <p><strong>Upload new media</strong> or drag and drop here</p>
+              <span class="p-drop-hint">WebP, JPG, or PNG (Max 5MB)</span>
+            </div>
+            <div class="p-preview-wrapper" id="pAdminPreviewWrapper" hidden>
+              <img id="pAdminPreviewImg" class="p-upload-img" alt="Preview">
+              <button type="button" class="p-btn-remove-preview" id="pAdminRemovePreview" title="Remove image">&times;</button>
+            </div>
+          </div>
+
+          <div class="p-form-group">
+            <label for="pAdminInputTitle">Pin Title *</label>
+            <input type="text" id="pAdminInputTitle" class="p-input-text" placeholder="e.g. Rosé — Velvet & Crimson Shoot" required>
+          </div>
+
+          <div class="p-form-group">
+            <label for="pAdminInputDesc">Description</label>
+            <textarea id="pAdminInputDesc" class="p-input-textarea" rows="3" placeholder="Archival details, editorial notes, camera specs..."></textarea>
+          </div>
+
+          <div class="p-form-row">
+            <div class="p-form-group">
+              <label for="pAdminSelectCreator">Creator</label>
+              <select id="pAdminSelectCreator" class="p-input-select">
+                <option value="rose">Rosé</option>
+                <option value="sharly">Sharly Modak</option>
+                <option value="yamu">Yamu</option>
+              </select>
+            </div>
+
+            <div class="p-form-group">
+              <label for="pAdminSelectBoard">Board</label>
+              <select id="pAdminSelectBoard" class="p-input-select">
+                <option value="">General Collection</option>
+                <option value="11111111-1111-1111-1111-111111111111">Rosé Collection</option>
+                <option value="22222222-2222-2222-2222-222222222222">Sharly Modak Board</option>
+                <option value="33333333-3333-3333-3333-333333333333">Yamu Aesthetics</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="p-form-group">
+            <label for="pAdminInputLink">Destination URL</label>
+            <input type="url" id="pAdminInputLink" class="p-input-text" placeholder="https://instagram.com/...">
+          </div>
+
+          <div class="p-form-group">
+            <label for="pAdminInputTags">Tags (comma separated)</label>
+            <input type="text" id="pAdminInputTags" class="p-input-text" placeholder="fashion, editorial, portrait">
+          </div>
+
+          <div class="p-checkbox-row">
+            <label class="p-checkbox-label">
+              <input type="checkbox" id="pAdminCheckPublished" checked>
+              <span>Publish immediately</span>
+            </label>
+            <label class="p-checkbox-label">
+              <input type="checkbox" id="pAdminCheckFeatured">
+              <span>Feature on homepage</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="p-admin-drawer-footer">
+          <button type="submit" class="p-btn-red" id="pAdminSubmitBtn">Publish Pin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Authentication Modal (Login / Sign Up) -->
+  <div id="pAuthModal" class="p-modal-backdrop" hidden role="dialog" aria-modal="true" aria-label="Authentication Modal">
+    <div class="p-modal-scrim" id="pAuthScrim"></div>
+    <div class="p-modal-container p-auth-container">
+      <button class="p-btn-close-modal" id="pAuthCloseBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <div class="p-auth-card">
+        <div class="p-auth-logo">
+          <img src="assets/images/logo.png" alt="Selena Logo" class="p-logo-img">
+        </div>
+        <h2 id="pAuthTitle" class="p-auth-title">Log In to Selena Archive</h2>
+        <p class="p-auth-sub">Save aesthetic pins, create custom boards, and engage with the collection.</p>
+
+        <form id="pAuthForm" class="p-auth-form">
+          <div class="p-form-group">
+            <label for="pAuthEmail">Email Address</label>
+            <input type="email" id="pAuthEmail" class="p-input-text" placeholder="name@example.com" required autocomplete="email">
+          </div>
+
+          <div class="p-form-group">
+            <label for="pAuthPassword">Password</label>
+            <input type="password" id="pAuthPassword" class="p-input-text" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="p-btn-red p-btn-full" id="pAuthSubmitBtn">Log In</button>
+        </form>
+
+        <div class="p-auth-divider"><span>OR</span></div>
+
+        <button type="button" class="p-btn-secondary p-btn-full" id="pAuthGoogleBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.3 0-.8.1-1.6.4-2.3L1.6 7.2C.6 9.2 0 11.5 0 14s.6 4.8 1.6 6.8l3.7-6.1z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.7 7.4 22.3 12 23z"/></svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div class="p-auth-footer">
+          <button type="button" class="p-auth-toggle-link" id="pAuthToggleMode">Don't have an account? Sign Up</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pinterest Toast Notification -->
+  <div id="pToast" class="p-toast" hidden role="alert" aria-live="assertive">
+    <span id="pToastMsg">Saved to board!</span>
+  </div>
+
+  <!-- Main ES Module Entry Point -->
+  <script type="module" src="assets/js/main.js"></script>
+
+</body>
+</html>
