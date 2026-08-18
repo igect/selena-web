@@ -591,6 +591,27 @@ button {
   font-weight: 800;
 }
 
+/* Stable Fade & Skeleton Animations */
+@keyframes pFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pPulse {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 /* Pinterest Masonry Pin Grid */
 .p-masonry-grid {
   column-width: 236px;
@@ -605,11 +626,50 @@ button {
   position: relative;
   background-color: var(--bg-card);
   cursor: pointer;
-  transition: transform 0.2s var(--ease-pin);
+  animation: pFadeIn 0.25s ease-out forwards;
+  transition: transform 0.2s var(--ease-pin), box-shadow 0.2s ease;
 }
 
 .p-pin-card:hover {
   transform: translateY(-2px);
+}
+
+/* Skeletons with zero layout shift */
+.p-pin-skeleton {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  border-radius: var(--radius-pin);
+  overflow: hidden;
+  background-color: var(--bg-card);
+  animation: pPulse 1.5s ease-in-out infinite;
+}
+
+.p-skeleton-media {
+  width: 100%;
+  height: 280px;
+  background-color: var(--bg-hover);
+  border-radius: var(--radius-pin);
+}
+
+.p-pin-skeleton:nth-child(2n) .p-skeleton-media {
+  height: 360px;
+}
+
+.p-pin-skeleton:nth-child(3n) .p-skeleton-media {
+  height: 220px;
+}
+
+.p-skeleton-text {
+  height: 12px;
+  background-color: var(--bg-hover);
+  border-radius: 6px;
+  margin: 10px 12px 6px 12px;
+}
+
+.p-skeleton-text.short {
+  width: 50%;
+  margin-top: 4px;
+  margin-bottom: 12px;
 }
 
 .p-pin-img-wrapper {

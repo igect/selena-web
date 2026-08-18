@@ -122,9 +122,7 @@ export function createProfileUI({
     }
 
     boardsGrid.innerHTML = boards.map(b => {
-      let thumb = 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/rose_01.jpg';
-      if (b.creator_id === 'sharly' || b.id?.includes('sharly')) thumb = 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/sharly_01.jpg';
-      else if (b.creator_id === 'yamu' || b.id?.includes('yamu')) thumb = 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/yamu_01.jpg';
+      const thumb = b.cover_image || 'assets/images/logo.png';
 
       return `
         <div class="p-board-card" data-board-id="${b.id}" tabindex="0" role="button">

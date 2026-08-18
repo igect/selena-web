@@ -293,6 +293,11 @@ export function createAdminUI({
 
   function setBoards(boards) {
     availableBoards = boards || [];
+    const boardSelect = document.getElementById('pAdminSelectBoard');
+    if (boardSelect) {
+      boardSelect.innerHTML = '<option value="">General Collection</option>' +
+        availableBoards.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+    }
   }
 
   init();
