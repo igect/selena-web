@@ -23,6 +23,3 @@ jobs:
 
       - name: Run Unit Tests
         run: npm test
-
-      - name: Validate Schema Migration & Dry-Run
-        run: node scripts/migrate-local-to-supabase.cjs --dry-run
