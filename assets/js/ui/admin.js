@@ -186,7 +186,7 @@ export function createAdminUI({
 
         const title = document.getElementById('pAdminInputTitle')?.value?.trim();
         const description = document.getElementById('pAdminInputDesc')?.value?.trim() || '';
-        const creator_id = document.getElementById('pAdminSelectCreator')?.value || 'yamu';
+        const creator_id = document.getElementById('pAdminSelectCreator')?.value;
         const board_id = document.getElementById('pAdminSelectBoard')?.value || null;
         const destination_link = document.getElementById('pAdminInputLink')?.value?.trim() || null;
         const tags = (document.getElementById('pAdminInputTags')?.value || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -402,7 +402,7 @@ export function createAdminUI({
 
       if (titleIn) titleIn.value = pin.title || '';
       if (descIn) descIn.value = pin.description || '';
-      if (creatorIn) creatorIn.value = pin.creator_id || 'yamu';
+      if (creatorIn) creatorIn.value = pin.creator_id;
       if (linkIn) linkIn.value = pin.destination_link || '';
       if (tagsIn) tagsIn.value = (pin.tags || []).join(', ');
       if (pubIn) pubIn.checked = pin.is_published !== false;

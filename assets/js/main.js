@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return false;
       }
       const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'Member';
-      const userAvatar = user.user_metadata?.avatar_url || 'assets/images/logo.png';
+      const userAvatar = user.user_metadata?.avatar_url || CONFIG.DEFAULT_IMAGE_URL;
       await PinsAPI.addComment(pinId, user.id, text, userName, userAvatar);
       return true;
     }
@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isFeatured = c.is_featured || (c.follower_count && c.follower_count > 100000);
       const tag = isFeatured ? 'Featured Collection' : 'Trending Showcase';
       const subtitle = c.bio || `${c.name} Aesthetic & Media`;
-      const imgUrl = c.avatar_url || 'assets/images/logo.png';
+      const imgUrl = c.avatar_url || CONFIG.DEFAULT_IMAGE_URL;
 
       cards.push(`
         <div class="p-explore-card" data-explore-creator="${c.id}" tabindex="0" role="button" aria-label="Explore ${escapeHtml(c.name)} Collection">
@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // click handler below already supports data-explore-board, this loop
     // was previously missing so boards never actually appeared here.
     boards.filter(b => b.is_system).forEach(b => {
-      const imgUrl = b.cover_image_url || 'assets/images/logo.png';
+      const imgUrl = b.cover_image_url || CONFIG.DEFAULT_IMAGE_URL;
       const subtitle = b.description || 'Curated Collection';
 
       cards.push(`

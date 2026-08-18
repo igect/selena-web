@@ -85,13 +85,13 @@ export function createProfileUI({
     if (!user) {
       if (nameEl) nameEl.textContent = 'Selena Member';
       if (handleEl) handleEl.textContent = '@member';
-      if (avatarImg) avatarImg.src = 'assets/images/logo.png';
+      if (avatarImg) avatarImg.src = CONFIG.DEFAULT_IMAGE_URL;
       return;
     }
 
     const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Selena Member';
     const handle = `@${user.email?.split('@')[0] || 'member'}`;
-    const avatar = user.user_metadata?.avatar_url || 'assets/images/logo.png';
+    const avatar = user.user_metadata?.avatar_url || CONFIG.DEFAULT_IMAGE_URL;
 
     if (nameEl) nameEl.textContent = name;
     if (handleEl) handleEl.textContent = handle;
@@ -122,7 +122,7 @@ export function createProfileUI({
     }
 
     boardsGrid.innerHTML = boards.map(b => {
-      const thumb = b.cover_image_url || 'assets/images/logo.png';
+      const thumb = b.cover_image_url || CONFIG.DEFAULT_IMAGE_URL;
 
       return `
         <div class="p-board-card" data-board-id="${b.id}" tabindex="0" role="button">

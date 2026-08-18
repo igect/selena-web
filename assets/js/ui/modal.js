@@ -158,7 +158,7 @@ export function createPinModal({
     if (titleEl) titleEl.textContent = pin.title || 'Untitled Pin';
     if (descEl) descEl.textContent = pin.description || '';
     if (dateEl) dateEl.textContent = pin.date ? `Saved · ${pin.date}` : 'Curated Pin';
-    if (creatorAvatar) creatorAvatar.src = pin.creatorAvatar || 'assets/images/logo.png';
+    if (creatorAvatar) creatorAvatar.src = pin.creatorAvatar || CONFIG.DEFAULT_IMAGE_URL;
     if (creatorName) creatorName.textContent = pin.creatorName || 'Creator';
 
     if (creatorFollowers) {
@@ -249,7 +249,7 @@ export function createPinModal({
       }
       commentsSection.innerHTML = header + '<div class="p-comments-list">' + comments.map(c => `
         <div class="p-comment-item">
-          <img src="${c.user_avatar || 'assets/images/logo.png'}" alt="${escapeHtml(c.user_name)}" class="p-comment-avatar" />
+          <img src="${c.user_avatar || CONFIG.DEFAULT_IMAGE_URL}" alt="${escapeHtml(c.user_name)}" class="p-comment-avatar" />
           <div class="p-comment-body">
             <strong>${escapeHtml(c.user_name)}</strong>
             <p>${escapeHtml(c.content)}</p>

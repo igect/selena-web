@@ -156,7 +156,7 @@ export function createPinModalUI({
         const user = typeof getUser === 'function' ? getUser() : null;
 
         const creatorSelect = document.getElementById('pCreateCreator');
-        const creatorId = creatorSelect?.value || 'yamu';
+        const creatorId = creatorSelect?.value;
 
         try {
           submitBtn.disabled = true;

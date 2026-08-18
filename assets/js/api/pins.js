@@ -306,7 +306,7 @@ export const PinsAPI = {
   /**
    * Add a comment to a pin
    */
-  async addComment(pinId, userId, content, userName = 'Guest', userAvatar = 'assets/images/logo.png') {
+  async addComment(pinId, userId, content, userName = 'Guest', userAvatar = CONFIG.DEFAULT_IMAGE_URL) {
     const sb = await getSupabase();
     if (!sb || !userId) throw new Error('Authentication required.');
 
@@ -333,7 +333,7 @@ export const PinsAPI = {
     const sb = await getSupabase();
     if (!sb) throw new Error('Database service unavailable.');
 
-    let imageUrl = pinData.imageUrl || 'assets/images/logo.png';
+    let imageUrl = pinData.imageUrl || CONFIG.DEFAULT_IMAGE_URL;
     let imagePath = null;
 
     if (imageFile) {
@@ -362,7 +362,7 @@ export const PinsAPI = {
     const row = {
       title: pinData.title || 'Untitled Pin',
       description: pinData.description || '',
-      creator_id: pinData.creatorId || pinData.creator || 'yamu',
+      creator_id: pinData.creatorId || pinData.creator,
       board_id: pinData.boardId || null,
       user_id: pinData.userId || null,
       image_url: imageUrl,

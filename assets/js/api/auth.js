@@ -94,7 +94,7 @@ export const AuthAPI = {
 
     const redirectUrl = typeof window !== 'undefined'
       ? (window.location.origin + window.location.pathname).replace(/\/+$/, '') + '/'
-      : 'https://selena.dev.cv/';
+      : '';
 
     const { data, error } = await sb.auth.signInWithOAuth({
       provider,
