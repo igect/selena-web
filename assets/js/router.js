@@ -36,6 +36,10 @@ export function createRouter(store) {
       store.setCreator(decodeURIComponent(segments[1]));
       store.setView('home');
       if (typeof document !== 'undefined') document.title = `${decodeURIComponent(segments[1])} — Selena`;
+    } else if (segments[0] === 'board' && segments[1]) {
+      store.setBoard(decodeURIComponent(segments[1]));
+      store.setView('home');
+      if (typeof document !== 'undefined') document.title = `Board — Selena`;
     } else {
       store.setView('home');
       if (typeof document !== 'undefined') document.title = titles.home;

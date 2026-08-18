@@ -1,9 +1,8 @@
 /**
  * Selena Media Archive — Authentication API
- * Provides login, signup, session restoration, and admin role checking.
+ * Pure live Supabase Auth API for production.
  */
 
-import { CONFIG } from '../config.js';
 import { getSupabase } from '../supabase-client.js';
 
 export const AuthAPI = {
@@ -12,11 +11,7 @@ export const AuthAPI = {
    */
   async getSession() {
     const supabase = await getSupabase();
-    if (!supabase) {
-      // Local fallback session
-      const localUser = localStorage.getItem('selena_local_user');
-      return localUser ? { user: JSON.parse(localUser) } : null;
-    }
+    if (!supabase) return null;
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
       console.error('[AuthAPI] getSession error:', error);
@@ -40,11 +35,6 @@ export const AuthAPI = {
     const user = await this.getCurrentUser();
     if (!user) return false;
 
-    // Local fallback override (development only)
-    if (!CONFIG.IS_PRODUCTION && localStorage.getItem('selena_local_is_admin') === 'true') {
-      return true;
-    }
-
     const supabase = await getSupabase();
     if (!supabase) return false;
 
@@ -67,17 +57,7 @@ export const AuthAPI = {
    */
   async signInWithPassword(email, password) {
     const supabase = await getSupabase();
-    if (!supabase) {
-      // Local offline mock login
-      const mockUser = {
-        id: 'local-admin-uuid',
-        email,
-        user_metadata: { name: email.split('@')[0], avatar_url: 'assets/images/logo.png' }
-      };
-      localStorage.setItem('selena_local_user', JSON.stringify(mockUser));
-      localStorage.setItem('selena_local_is_admin', 'true');
-      return { user: mockUser, error: null };
-    }
+    if (!supabase) throw new Error('Live database connection unavailable.');
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     return { user: data?.user || null, session: data?.session || null, error };
@@ -88,15 +68,7 @@ export const AuthAPI = {
    */
   async signUp(email, password, name = '') {
     const supabase = await getSupabase();
-    if (!supabase) {
-      const mockUser = {
-        id: 'local-user-' + Date.now(),
-        email,
-        user_metadata: { name: name || email.split('@')[0], avatar_url: 'assets/images/logo.png' }
-      };
-      localStorage.setItem('selena_local_user', JSON.stringify(mockUser));
-      return { user: mockUser, error: null };
-    }
+    if (!supabase) throw new Error('Live database connection unavailable.');
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -113,13 +85,13 @@ export const AuthAPI = {
    */
   async signInWithOAuth(provider) {
     const supabase = await getSupabase();
-    if (!supabase) {
-      return { data: null, error: new Error('Supabase is not configured for OAuth.') };
-    }
+    if (!supabase) throw new Error('Live database connection unavailable.');
+
+    const redirectUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: window.location.origin + window.location.pathname
+        redirectTo: redirectUrl
       }
     });
     return { data, error };
@@ -129,9 +101,6 @@ export const AuthAPI = {
    * Sign out current user
    */
   async signOut() {
-    localStorage.removeItem('selena_local_user');
-    localStorage.removeItem('selena_local_is_admin');
-
     const supabase = await getSupabase();
     if (supabase) {
       await supabase.auth.signOut();

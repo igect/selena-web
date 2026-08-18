@@ -241,13 +241,22 @@ export function createAdminPanel(store, router) {
     adminState.editingPin = pin;
     selectedFile = null;
 
+    // Populate dynamic boards in select dropdown
+    if (els.selectBoard) {
+      const boards = store.getState().boards || [];
+      els.selectBoard.innerHTML = `
+        <option value="">General Collection</option>
+        ${boards.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')}
+      `;
+    }
+
     if (pin) {
       els.drawerTitle.textContent = 'Edit Pin';
       els.inputTitle.value = pin.title || '';
       els.inputDesc.value = pin.description || '';
       els.inputLink.value = pin.destination_link || pin.destinationLink || '';
       els.selectCreator.value = pin.creator_id || pin.creator || 'rose';
-      els.selectBoard.value = pin.board_id || '';
+      if (els.selectBoard) els.selectBoard.value = pin.board_id || pin.boardId || '';
       els.inputTags.value = Array.isArray(pin.tags) ? pin.tags.join(', ') : '';
       els.checkboxPublished.checked = pin.is_published !== false;
       els.checkboxFeatured.checked = Boolean(pin.is_featured);
@@ -476,10 +485,9 @@ export function createAdminPanel(store, router) {
           }
           closeDrawer();
           loadMetrics();
-          loadPinsTable();
-          // Reload feed so new pin appears immediately
+          // Refresh feed reactively
+          store.resetPage();
           router.navigate('');
-          setTimeout(() => window.location.reload(), 300);
         } catch (err) {
           alert('Error saving pin: ' + err.message);
         } finally {

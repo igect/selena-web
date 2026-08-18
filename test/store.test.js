@@ -85,4 +85,27 @@ describe('AppStore Reactive State Suite', () => {
     store.setSort('oldest');
     assert.equal(callCount, 2); // Unsubscribed, no extra call
   });
+
+  it('updates board filter and resets creator and page', () => {
+    const store = createAppStore();
+    store.setCreator('rose');
+    store.nextPage();
+    assert.equal(store.getState().page, 2);
+
+    store.setBoard('board-uuid-123');
+    const state = store.getState();
+    assert.equal(state.boardId, 'board-uuid-123');
+    assert.equal(state.creator, 'all');
+    assert.equal(state.page, 1);
+  });
+
+  it('signs out user and clears admin state', async () => {
+    const store = createAppStore();
+    store.setUser({ id: 'user-1', email: 'test@example.com' }, true);
+    assert.equal(store.getState().isAdmin, true);
+
+    await store.signOut();
+    assert.equal(store.getState().user, null);
+    assert.equal(store.getState().isAdmin, false);
+  });
 });

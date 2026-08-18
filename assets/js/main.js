@@ -29,7 +29,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     savedBadge: document.getElementById('pSavedBadge'),
     themeBtn: document.getElementById('pThemeBtn'),
     profileBtn: document.getElementById('pProfileBtn'),
-    profileAvatarImg: document.querySelector('.p-avatar-img'),
+    profileAvatarImgs: document.querySelectorAll('.p-avatar-img'),
+
+    // User Dropdown Popover
+    userDropdown: document.getElementById('pUserDropdown'),
+    dropdownUserName: document.getElementById('pDropdownUserName'),
+    dropdownUserEmail: document.getElementById('pDropdownUserEmail'),
+    menuProfileBtn: document.getElementById('pMenuProfileBtn'),
+    menuAdminBtn: document.getElementById('pMenuAdminBtn'),
+    menuSignOutBtn: document.getElementById('pMenuSignOutBtn'),
 
     // Views
     feedSection: document.getElementById('pFeedSection'),
@@ -58,6 +66,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabCreated: document.getElementById('pTabCreated'),
     profileName: document.querySelector('.p-profile-name'),
     profileHandle: document.querySelector('.p-profile-handle'),
+    editProfileBtn: document.getElementById('pEditProfileBtn'),
+    shareProfileBtn: document.getElementById('pShareProfileBtn'),
+    profilePinsCount: document.getElementById('pProfilePinsCount'),
+    profileSavedCount: document.getElementById('pProfileSavedCount'),
+    profileFollowingCount: document.getElementById('pProfileFollowingCount'),
+    profileAvatar: document.querySelector('.p-profile-avatar-large img'),
 
     // Pin Detail Modal
     pinModal: document.getElementById('pPinModal'),
@@ -69,10 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailDate: document.getElementById('pDetailDate'),
     detailCreatorAvatar: document.getElementById('pDetailCreatorAvatar'),
     detailCreatorName: document.getElementById('pDetailCreatorName'),
+    detailCreatorFollowers: document.querySelector('.p-creator-followers'),
     detailFollowBtn: document.getElementById('pFollowBtn'),
     detailSaveBtn: document.getElementById('pDetailSaveBtn'),
     detailDownloadBtn: document.getElementById('pDetailDownloadBtn'),
     detailShareBtn: document.getElementById('pDetailShareBtn'),
+    detailLinkBtn: document.getElementById('pDetailLinkBtn'),
     reactionBtns: document.querySelectorAll('.p-reaction-btn'),
     commentsContainer: document.querySelector('.p-comments-section'),
     commentInput: document.querySelector('.p-comment-input'),
@@ -104,14 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveBoardBtn: document.getElementById('pSaveNewBoardBtn'),
     cancelBoardBtn: document.getElementById('pCancelNewBoardBtn'),
 
-    // Profile action buttons
-    editProfileBtn: document.getElementById('pEditProfileBtn'),
-    shareProfileBtn: document.getElementById('pShareProfileBtn'),
-    profilePinsCount: document.getElementById('pProfilePinsCount'),
-    profileSavedCount: document.getElementById('pProfileSavedCount'),
-    profileFollowingCount: document.getElementById('pProfileFollowingCount'),
-    profileAvatar: document.querySelector('.p-profile-avatar-large img'),
-
     // Auth Modal
     authModal: document.getElementById('pAuthModal'),
     authScrim: document.getElementById('pAuthScrim'),
@@ -130,7 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     notifPanel: document.getElementById('pNotifPanel'),
     inboxBtn: document.getElementById('pInboxBtn'),
     inboxPanel: document.getElementById('pInboxPanel'),
-    userDropdown: document.getElementById('pUserDropdown'),
 
     // Toast
     toast: document.getElementById('pToast'),
@@ -200,6 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         page: st.page,
         pageSize: CONFIG.PAGE_SIZE,
         creator: st.creator,
+        boardId: st.boardId,
         query: st.query,
         filter: st.filter,
         sort: st.sort,
@@ -300,6 +308,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
 
+      // Share button inside card
+      const shareBtn = card.querySelector('.p-btn-share');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const shareUrl = `${window.location.origin}${window.location.pathname}#/pin/${pin.id}`;
+          if (navigator.share) {
+            try {
+              await navigator.share({ title: pin.title, url: shareUrl });
+            } catch {}
+          } else {
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              showToast('Link copied to clipboard!');
+            } catch {
+              showToast('Could not copy link');
+            }
+          }
+        });
+      }
+
       frag.appendChild(card);
     });
 
@@ -329,6 +358,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       els.detailCreatorName.textContent = pin.creatorName;
       els.detailCreatorAvatar.src = pin.creatorAvatar || 'assets/images/logo.png';
 
+      // Follower count formatted
+      const followers = pin.creatorFollowers || (pin.creator === 'sharly' ? 890000 : pin.creator === 'yamu' ? 430000 : 1420000);
+      if (els.detailCreatorFollowers) {
+        els.detailCreatorFollowers.textContent = followers > 1000000
+          ? `${(followers / 1000000).toFixed(1)}M followers`
+          : `${(followers / 1000).toFixed(0)}K followers`;
+      }
+
       els.detailSaveBtn.textContent = isSaved ? 'Saved' : 'Save';
       els.detailSaveBtn.classList.toggle('saved', isSaved);
 
@@ -337,15 +374,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.detailFollowBtn.classList.toggle('following', isFollowing);
       }
 
+      // Destination Link
+      if (els.detailLinkBtn) {
+        if (pin.destinationLink) {
+          els.detailLinkBtn.href = pin.destinationLink;
+          els.detailLinkBtn.hidden = false;
+        } else {
+          els.detailLinkBtn.hidden = true;
+        }
+      }
+
+      // Base reaction counts
+      const baseCounts = {
+        love: pin.likesCount || 312,
+        sparkle: Math.round((pin.likesCount || 312) * 0.62) || 194,
+        fire: Math.round((pin.likesCount || 312) * 0.41) || 128
+      };
+
       // Update reactions UI
       els.reactionBtns.forEach(btn => {
         const type = btn.getAttribute('data-reaction');
         const active = Boolean(pinRx[type]);
         btn.classList.toggle('active', active);
+        const countSpan = btn.querySelector('.rx-num');
+        if (countSpan) {
+          const count = baseCounts[type] + (active ? 1 : 0);
+          countSpan.textContent = count.toLocaleString();
+        }
       });
 
       // Load comments
       loadPinComments(pin.id);
+
+      // Load Related Pins ("More Like This")
+      renderRelatedPins(pin);
 
       els.pinModal.hidden = false;
       document.body.classList.add('modal-open');
@@ -362,11 +424,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  async function renderRelatedPins(pin) {
+    if (!els.relatedPinsGrid) return;
+    els.relatedPinsGrid.innerHTML = '';
+
+    try {
+      const res = await PinsAPI.fetchPins({
+        creator: pin.creator,
+        pageSize: 8
+      });
+
+      const related = (res.pins || []).filter(p => p.id !== pin.id).slice(0, 6);
+      if (related.length === 0) {
+        els.relatedPinsGrid.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;padding:8px 0;">No related pins found.</p>';
+        return;
+      }
+
+      els.relatedPinsGrid.innerHTML = related.map(p => `
+        <div class="p-related-card" data-pin-id="${p.id}" tabindex="0" role="button" title="${escapeHtml(p.title)}">
+          <img src="${p.img}" alt="${escapeHtml(p.title)}" loading="lazy">
+          <span class="p-related-title">${escapeHtml(p.title)}</span>
+        </div>
+      `).join('');
+
+      els.relatedPinsGrid.querySelectorAll('.p-related-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.getAttribute('data-pin-id');
+          if (id) router.navigate(`pin/${id}`);
+        });
+      });
+    } catch (err) {
+      console.warn('[Main] Error loading related pins:', err);
+    }
+  }
+
   async function loadPinComments(pinId) {
     if (!els.commentsContainer) return;
     try {
       const comments = await PinsAPI.fetchComments(pinId);
-      const listEl = els.commentsContainer.querySelector('.p-comment-item') || els.commentsContainer;
       
       let html = `<span class="p-comments-title">Comments (${comments.length})</span>`;
       if (comments.length === 0) {
@@ -403,7 +498,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (els.createLink) els.createLink.value = '';
     if (els.createPreviewWrapper) els.createPreviewWrapper.hidden = true;
     if (els.createDropPlaceholder) els.createDropPlaceholder.hidden = false;
-    if (els.selectedBoardLabel) els.selectedBoardLabel.textContent = 'Select a board';
+    if (els.selectedBoardLabel) els.selectedBoardLabel.textContent = 'Choose a board';
     if (els.boardDropdown) els.boardDropdown.hidden = true;
     if (els.inlineBoardForm) els.inlineBoardForm.hidden = true;
     populateBoardDropdown();
@@ -450,7 +545,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (els.createRemovePreviewBtn) {
-    els.createRemovePreviewBtn.addEventListener('click', () => {
+    els.createRemovePreviewBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       selectedCreateFile = null;
       if (els.createFileInput) els.createFileInput.value = '';
       if (els.createPreviewWrapper) els.createPreviewWrapper.hidden = true;
@@ -478,6 +574,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (els.openInlineBoardBtn && els.inlineBoardForm) {
     els.openInlineBoardBtn.addEventListener('click', () => {
       els.inlineBoardForm.hidden = false;
+      if (els.newBoardNameInput) {
+        els.newBoardNameInput.value = '';
+        els.newBoardNameInput.focus();
+      }
     });
   }
   if (els.cancelBoardBtn && els.inlineBoardForm) {
@@ -505,7 +605,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Submit Pin
+  // Quick tag pills in create pin modal
+  document.querySelectorAll('.p-tags-quick-pills .p-tag-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      pill.classList.toggle('active');
+    });
+  });
+
+  // Submit Pin (User Flow)
   if (els.createSubmitBtn) {
     els.createSubmitBtn.addEventListener('click', async () => {
       const st = store.getState();
@@ -513,6 +620,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const title = els.createTitle?.value.trim();
       if (!title) { showToast('Please add a title'); return; }
       if (!selectedCreateFile) { showToast('Please add an image'); return; }
+
+      const selectedTags = Array.from(document.querySelectorAll('.p-tags-quick-pills .p-tag-pill.active'))
+        .map(p => p.getAttribute('data-tag'))
+        .filter(Boolean);
 
       els.createSubmitBtn.disabled = true;
       els.createSubmitBtn.textContent = 'Publishing...';
@@ -522,8 +633,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           description: els.createDesc?.value.trim() || '',
           destinationLink: els.createLink?.value.trim() || '',
           boardId: selectedBoardId,
+          creatorId: st.creator !== 'all' ? st.creator : 'rose',
           userId: st.user.id,
-          tags: ''
+          tags: selectedTags
         }, selectedCreateFile);
         if (error) throw error;
         showToast('Pin published!');
@@ -583,6 +695,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 10. Store State Change Listener
+  let lastCreator = 'all';
+  let lastFilter = 'all';
+  let lastBoardId = null;
+
   store.subscribe((state) => {
     // 1. Update Saved Badge Counter
     if (els.savedBadge) {
@@ -602,32 +718,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (els.navHome) els.navHome.classList.toggle('active', state.view === 'home');
     if (els.navExplore) els.navExplore.classList.toggle('active', state.view === 'explore');
 
-    // 4. Pin Detail Modal
+    // 4. Synchronize Creator & Filter Chips Active States
+    els.creatorChips.forEach(chip => {
+      const c = chip.getAttribute('data-creator');
+      const f = chip.getAttribute('data-filter');
+
+      if (state.boardId) {
+        chip.classList.remove('active');
+      } else if (f) {
+        chip.classList.toggle('active', state.filter === f);
+      } else if (c) {
+        chip.classList.toggle('active', state.creator === c && state.filter === 'all');
+      }
+    });
+
+    // 5. Trigger pin reload on route-driven filter / creator / board change
+    if (state.view === 'home') {
+      const changed = state.creator !== lastCreator || state.filter !== lastFilter || state.boardId !== lastBoardId;
+      if (changed || (state.pins.length === 0 && !state.isLoading)) {
+        lastCreator = state.creator;
+        lastFilter = state.filter;
+        lastBoardId = state.boardId;
+        loadMorePins(true);
+      }
+    }
+
+    // 6. Pin Detail Modal
     if (state.view === 'pin' && state.activePinId) {
       openPinDetail(state.activePinId);
     } else if (state.view !== 'pin') {
       if (els.pinModal && !els.pinModal.hidden) closePinDetail();
     }
 
-    // 5. Admin Section Trigger
+    // 7. Admin Section Trigger
     if (state.view === 'admin') {
       adminPanel.refresh();
     }
 
-    // 6. User Profile Update
+    // 8. User Profile & Avatar Update
+    const avatarUrl = state.user?.user_metadata?.avatar_url || 'assets/images/logo.png';
+    const userName = state.user?.user_metadata?.name || state.user?.email?.split('@')[0] || 'Member';
+    const userHandle = `@${state.user?.email?.split('@')[0] || 'member'}`;
+
+    els.profileAvatarImgs.forEach(img => { img.src = avatarUrl; });
+
+    if (els.dropdownUserName) els.dropdownUserName.textContent = state.user ? userName : 'Guest';
+    if (els.dropdownUserEmail) els.dropdownUserEmail.textContent = state.user ? userHandle : 'Sign in to explore';
+    if (els.menuAdminBtn) els.menuAdminBtn.hidden = !state.isAdmin;
+
     if (state.user && els.profileName) {
-      els.profileName.textContent = state.user.user_metadata?.name || state.user.email?.split('@')[0] || 'Member';
-      if (els.profileHandle) els.profileHandle.textContent = `@${state.user.email?.split('@')[0] || 'member'}`;
-      if (els.profileAvatar && state.user.user_metadata?.avatar_url) {
-        els.profileAvatar.src = state.user.user_metadata.avatar_url;
-      }
+      els.profileName.textContent = userName;
+      if (els.profileHandle) els.profileHandle.textContent = userHandle;
+      if (els.profileAvatar) els.profileAvatar.src = avatarUrl;
     }
 
-    // 7. Profile Stats
+    // 9. Profile Stats
     if (els.profileSavedCount) els.profileSavedCount.textContent = store.getSavedCount();
     if (els.profileFollowingCount) els.profileFollowingCount.textContent = store.getFollowingCount();
 
-    // 8. Profile Tabs & Grids
+    // 10. Profile Tabs & Grids
     if (state.view === 'profile') {
       renderProfileView(state);
     }
@@ -665,28 +814,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!els.profileBoardsGrid) return;
     const boards = state.boards || [];
     if (boards.length === 0) {
-      els.profileBoardsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">No boards yet</p>';
+      els.profileBoardsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">No boards found</p>';
       return;
     }
-    els.profileBoardsGrid.innerHTML = boards.map(b => `
-      <div class="p-board-card" data-board-id="${b.id}">
-        <div class="p-board-preview">
-          <div class="p-board-thumb" style="background:var(--bg-hover);"></div>
+
+    // Assign previews based on matching creator / first loaded pin
+    const allPins = state.pins || [];
+    els.profileBoardsGrid.innerHTML = boards.map(b => {
+      let previewImg = 'assets/images/archive/rose_01.jpg';
+      if (b.creator_id === 'sharly' || b.id.includes('sharly')) previewImg = 'assets/images/archive/sharly_01.jpg';
+      else if (b.creator_id === 'yamu' || b.id.includes('yamu')) previewImg = 'assets/images/archive/yamu_01.jpg';
+
+      const match = allPins.find(p => p.boardId === b.id || p.board === b.name || p.creator === b.creator_id);
+      if (match && match.img) previewImg = match.img;
+
+      return `
+        <div class="p-board-card" data-board-id="${b.id}" tabindex="0" role="button">
+          <div class="p-board-preview">
+            <img src="${previewImg}" alt="${escapeHtml(b.name)}" class="p-board-thumb-img" loading="lazy">
+          </div>
+          <h3 class="p-board-name">${escapeHtml(b.name)}</h3>
+          <p class="p-board-meta">Curated Board · View pins &rarr;</p>
         </div>
-        <h3 class="p-board-name">${escapeHtml(b.name)}</h3>
-        <p class="p-board-meta">Curated Board · View pins</p>
-      </div>
-    `).join('');
+      `;
+    }).join('');
+
     // Attach click handlers
     els.profileBoardsGrid.querySelectorAll('.p-board-card').forEach(card => {
       card.addEventListener('click', () => {
         const boardId = card.getAttribute('data-board-id');
         if (boardId) {
-          store.setFilter('all');
-          store.setCreator('all');
-          // ponytail: navigate to home and filter by board — no new route needed
-          router.navigate('');
-          loadMorePins(true);
+          router.navigate(`board/${boardId}`);
         }
       });
     });
@@ -695,7 +853,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function renderProfilePins(pinIds, mode) {
     if (!els.profilePinsGrid) return;
     els.profilePinsGrid.hidden = false;
-    els.profilePinsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">Loading...</p>';
+    els.profilePinsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">Loading collection...</p>';
     try {
       let pins = [];
       if (mode === 'saved' && pinIds && pinIds.length > 0) {
@@ -709,7 +867,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
       if (pins.length === 0) {
-        els.profilePinsGrid.innerHTML = `<p style="color:var(--text-muted);padding:24px;">No ${mode} pins yet</p>`;
+        els.profilePinsGrid.innerHTML = `<p style="color:var(--text-muted);padding:24px;">No ${mode} pins found yet.</p>`;
         return;
       }
       els.profilePinsGrid.innerHTML = '';
@@ -741,20 +899,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (els.navHome) els.navHome.addEventListener('click', () => router.navigate(''));
   if (els.logoHome) els.logoHome.addEventListener('click', (e) => { e.preventDefault(); router.navigate(''); });
   if (els.navExplore) els.navExplore.addEventListener('click', () => router.navigate('explore'));
+
+  // Profile Avatar Button -> Toggle User Dropdown or Open Auth
   if (els.profileBtn) {
-    els.profileBtn.addEventListener('click', () => {
+    els.profileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const st = store.getState();
       if (!st.user) {
         openAuthModal(false);
-      } else if (st.isAdmin) {
-        router.navigate('admin');
-      } else {
-        router.navigate('profile');
+      } else if (els.userDropdown) {
+        els.userDropdown.hidden = !els.userDropdown.hidden;
       }
     });
   }
 
-  // Create Button (Requires Authentication)
+  // User Dropdown Actions
+  if (els.menuProfileBtn) {
+    els.menuProfileBtn.addEventListener('click', () => {
+      if (els.userDropdown) els.userDropdown.hidden = true;
+      router.navigate('profile');
+    });
+  }
+
+  if (els.menuAdminBtn) {
+    els.menuAdminBtn.addEventListener('click', () => {
+      if (els.userDropdown) els.userDropdown.hidden = true;
+      router.navigate('admin');
+    });
+  }
+
+  if (els.menuSignOutBtn) {
+    els.menuSignOutBtn.addEventListener('click', async () => {
+      if (els.userDropdown) els.userDropdown.hidden = true;
+      await store.signOut();
+      showToast('Logged out successfully');
+      router.navigate('');
+    });
+  }
+
+  // Create Button
   if (els.navCreateBtn) {
     els.navCreateBtn.addEventListener('click', () => {
       const st = store.getState();
@@ -777,6 +960,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.stopPropagation();
       els.notifPanel.hidden = !els.notifPanel.hidden;
       if (els.inboxPanel) els.inboxPanel.hidden = true;
+      if (els.userDropdown) els.userDropdown.hidden = true;
     });
   }
 
@@ -786,10 +970,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.stopPropagation();
       els.inboxPanel.hidden = !els.inboxPanel.hidden;
       if (els.notifPanel) els.notifPanel.hidden = true;
+      if (els.userDropdown) els.userDropdown.hidden = true;
     });
   }
 
-  // Favorites / Heart Header Button
+  // Saved Pins Filter Button
   if (els.savedBtn) {
     els.savedBtn.addEventListener('click', () => {
       router.navigate('profile/saved');
@@ -809,14 +994,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const currentName = st.user.user_metadata?.name || st.user.email?.split('@')[0] || '';
       const newName = prompt('Edit your display name:', currentName);
       if (newName !== null && newName.trim() !== '' && newName.trim() !== currentName) {
-        // ponytail: prompt() is the laziest working UI for name edit
-        import('../supabase-client.js').then(async ({ getSupabase }) => {
+        import('./supabase-client.js').then(async ({ getSupabase }) => {
           const supabase = await getSupabase();
           if (supabase) {
             const { error } = await supabase.auth.updateUser({ data: { name: newName.trim() } });
-            if (error) { showToast('Failed to update name'); return; }
+            if (error) { showToast('Failed to update name: ' + error.message); return; }
             showToast('Name updated!');
-            // Refresh session
             const user = await AuthAPI.getCurrentUser();
             if (user) store.setUser(user, st.isAdmin);
           }
@@ -843,18 +1026,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     card.addEventListener('click', () => {
       const creator = card.getAttribute('data-explore-creator');
       if (creator) {
-        store.setCreator(creator);
-        router.navigate(`creator/${creator}`);
-      }
-    });
-  });
-
-  // Profile Board Cards Navigation
-  document.querySelectorAll('.p-board-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const creator = card.getAttribute('data-board-creator');
-      if (creator) {
-        store.setCreator(creator);
         router.navigate(`creator/${creator}`);
       }
     });
@@ -867,6 +1038,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (els.inboxPanel && !els.inboxPanel.contains(e.target) && e.target !== els.inboxBtn && !els.inboxBtn?.contains(e.target)) {
       els.inboxPanel.hidden = true;
+    }
+    if (els.userDropdown && !els.userDropdown.contains(e.target) && e.target !== els.profileBtn && !els.profileBtn?.contains(e.target)) {
+      els.userDropdown.hidden = true;
     }
   });
 
@@ -896,19 +1070,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Creator & Filter Chips
   els.creatorChips.forEach(chip => {
     chip.addEventListener('click', () => {
-      els.creatorChips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-
       const creator = chip.getAttribute('data-creator');
       const filter = chip.getAttribute('data-filter');
 
       if (creator) {
-        store.setCreator(creator);
-        store.setFilter('all');
+        if (creator === 'all') {
+          router.navigate('');
+        } else {
+          router.navigate(`creator/${creator}`);
+        }
       } else if (filter) {
         store.setFilter(filter);
+        loadMorePins(true);
       }
-      loadMorePins(true);
     });
   });
 
@@ -943,8 +1117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       store.setQuery('');
       store.setCreator('all');
       store.setFilter('all');
-      els.creatorChips.forEach((c, idx) => c.classList.toggle('active', idx === 0));
-      loadMorePins(true);
+      router.navigate('');
     });
   }
 
@@ -988,11 +1161,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         store.toggleReaction(pinId, type);
         const hasReacted = Boolean(store.getState().reactions[pinId]?.[type]);
         btn.classList.toggle('active', hasReacted);
+        const countSpan = btn.querySelector('.rx-num');
+        if (countSpan) {
+          const currentVal = parseInt(countSpan.textContent.replace(/,/g, ''), 10) || 0;
+          countSpan.textContent = (hasReacted ? currentVal + 1 : Math.max(0, currentVal - 1)).toLocaleString();
+        }
       }
     });
   });
 
-  // Pin Download Handler (Direct High-Resolution Blob Download)
+  // Pin Download Handler
   if (els.detailDownloadBtn) {
     els.detailDownloadBtn.addEventListener('click', async () => {
       const pinId = store.getState().activePinId;
@@ -1002,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      showToast('Starting download...');
+      showToast('Downloading image...');
       try {
         const res = await fetch(pin.img, { mode: 'cors' });
         if (!res.ok) throw new Error('Fetch failed');
@@ -1018,7 +1196,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         URL.revokeObjectURL(blobUrl);
         showToast('Download complete!');
       } catch (err) {
-        // Direct link fallback
         const a = document.createElement('a');
         a.href = pin.img;
         a.target = '_blank';
@@ -1031,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Pin Share Handler (Web Share API & Clipboard Fallback)
+  // Pin Share Handler
   if (els.detailShareBtn) {
     els.detailShareBtn.addEventListener('click', async () => {
       const pinId = store.getState().activePinId;
@@ -1165,7 +1342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Handle OAuth hash params (clean URL after OAuth redirect)
+  // Handle OAuth hash params
   if (typeof window !== 'undefined' && window.location.hash) {
     if (window.location.hash.includes('error=')) {
       try {
@@ -1199,7 +1376,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/"/g, '&quot;');
   }
 
-  // 13. Initialize App
+  // 13. Global keyboard shortcuts ('/' to focus search)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== els.searchInput && (!els.pinModal || els.pinModal.hidden) && (!els.createModal || els.createModal.hidden) && (!els.authModal || els.authModal.hidden)) {
+      e.preventDefault();
+      els.searchInput?.focus();
+    }
+  });
+
+  // 14. Initialize App
   await store.init();
   adminPanel.init();
   router.init();

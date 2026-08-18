@@ -17,7 +17,7 @@ export async function getSupabase() {
   if (supabasePromise) return supabasePromise;
 
   supabasePromise = (async () => {
-    if (!CONFIG.isCloudConfigured()) {
+    if (!CONFIG.isCloudConfigured() || typeof window === 'undefined') {
       return null;
     }
 
@@ -40,11 +40,4 @@ export async function getSupabase() {
   })();
 
   return supabasePromise;
-}
-
-/**
- * Synchronous accessor for the initialized client (returns null if not yet initialized)
- */
-export function getSupabaseSync() {
-  return supabaseClient;
 }

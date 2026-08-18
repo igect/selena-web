@@ -42,10 +42,10 @@ if (IS_DRY_RUN) {
 console.log('----------------------------------------------------------------');
 
 async function run() {
-  // 1. Read local dataset
-  const dataPath = path.join('assets', 'js', 'archive-data.json');
+  // 1. Read seed dataset
+  const dataPath = path.join(__dirname, 'seed-data.json');
   if (!fs.existsSync(dataPath)) {
-    console.error('Error: assets/js/archive-data.json not found!');
+    console.error('Error: scripts/seed-data.json not found!');
     process.exit(1);
   }
 

@@ -6,23 +6,9 @@
 import { AuthAPI } from './api/auth-api.js';
 import { PinsAPI } from './api/pins-api.js';
 
-const safeStorage = {
-  get(key, fallback = null) {
-    try {
-      if (typeof localStorage === 'undefined') return fallback;
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : fallback;
-    } catch {
-      return fallback;
-    }
-  },
-  set(key, val) {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(key, JSON.stringify(val));
-      }
-    } catch {}
-  }
+const storage = {
+  get: (k, d = null) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 
 export function createAppStore() {
@@ -39,6 +25,7 @@ export function createAppStore() {
 
     // Filtering & Query
     creator: 'all',
+    boardId: null,
     filter: 'all', // 'all' | 'popular' | 'saved'
     query: '',
     sort: 'newest',
@@ -52,9 +39,9 @@ export function createAppStore() {
     isLoading: false,
 
     // User Interactions
-    savedPinIds: safeStorage.get('pinterest_saved_pins', []),
-    reactions: safeStorage.get('pinterest_reactions', {}),
-    followedCreators: safeStorage.get('pinterest_followed', []),
+    savedPinIds: storage.get('pinterest_saved_pins', []),
+    reactions: storage.get('pinterest_reactions', {}),
+    followedCreators: storage.get('pinterest_followed', []),
 
     // Creators & Boards metadata
     creators: [],
@@ -76,12 +63,6 @@ export function createAppStore() {
   return {
     getState() {
       return { ...state };
-    },
-
-    getCreatedPinsCount() {
-      if (!state.user) return 0;
-      // This is a rough count from loaded pins; exact count needs API query
-      return state.pins.filter(p => p.user_id === state.user.id).length;
     },
 
     getSavedCount() {
@@ -149,16 +130,27 @@ export function createAppStore() {
     },
 
     setCreator(creator) {
-      if (state.creator === creator) return;
+      if (state.creator === creator && state.boardId === null) return;
       state.creator = creator;
+      state.boardId = null;
+      state.page = 1;
+      state.pins = [];
+      notify();
+    },
+
+    setBoard(boardId) {
+      if (state.boardId === boardId) return;
+      state.boardId = boardId;
+      state.creator = 'all';
       state.page = 1;
       state.pins = [];
       notify();
     },
 
     setFilter(filter) {
-      if (state.filter === filter) return;
+      if (state.filter === filter && state.boardId === null) return;
       state.filter = filter;
+      state.boardId = null;
       state.page = 1;
       state.pins = [];
       notify();
@@ -218,7 +210,7 @@ export function createAppStore() {
         updated = [...state.savedPinIds, pinId];
       }
       state.savedPinIds = updated;
-      safeStorage.set('pinterest_saved_pins', updated);
+      storage.set('pinterest_saved_pins', updated);
       notify();
 
       if (state.user) {
@@ -240,7 +232,7 @@ export function createAppStore() {
       }
 
       state.reactions[pinId] = pinRx;
-      safeStorage.set('pinterest_reactions', state.reactions);
+      storage.set('pinterest_reactions', state.reactions);
       notify();
 
       if (state.user) {
@@ -260,7 +252,24 @@ export function createAppStore() {
         updated = [...state.followedCreators, creatorId];
       }
       state.followedCreators = updated;
-      safeStorage.set('pinterest_followed', updated);
+      storage.set('pinterest_followed', updated);
+      notify();
+    },
+
+    /**
+     * Get Reactions for Pin
+     */
+    getReactions(pinId) {
+      return state.reactions[pinId] || {};
+    },
+
+    /**
+     * Sign out current user
+     */
+    async signOut() {
+      await AuthAPI.signOut();
+      state.user = null;
+      state.isAdmin = false;
       notify();
     }
   };
