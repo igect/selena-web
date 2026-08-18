@@ -1,14 +1,15 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createAppStore } from '../assets/js/store.js';
+import { createAppStore } from '../assets/js/core/store.js';
 
-describe('AppStore Reactive State Suite', () => {
+describe('AppStore Deep Module Suite', () => {
   it('initializes with default state', () => {
     const store = createAppStore();
     const state = store.getState();
 
     assert.equal(state.view, 'home');
-    assert.equal(state.creator, 'all');
+    assert.equal(state.activeCreatorId, 'all');
+    assert.equal(state.activeBoardId, null);
     assert.equal(state.filter, 'all');
     assert.equal(state.sort, 'newest');
     assert.equal(state.query, '');
@@ -22,7 +23,8 @@ describe('AppStore Reactive State Suite', () => {
 
     store.setCreator('rose');
     const state = store.getState();
-    assert.equal(state.creator, 'rose');
+    assert.equal(state.activeCreatorId, 'rose');
+    assert.equal(state.activeBoardId, null);
     assert.equal(state.page, 1);
   });
 
@@ -38,7 +40,7 @@ describe('AppStore Reactive State Suite', () => {
 
   it('toggles pin bookmarks (saves)', async () => {
     const store = createAppStore();
-    const pinId = 'test-pin-101';
+    const pinId = 'pin-test-101';
 
     await store.toggleSave(pinId);
     assert.equal(store.getState().savedPinIds.includes(pinId), true);
@@ -49,7 +51,7 @@ describe('AppStore Reactive State Suite', () => {
 
   it('toggles pin reactions', async () => {
     const store = createAppStore();
-    const pinId = 'test-pin-202';
+    const pinId = 'pin-test-202';
 
     await store.toggleReaction(pinId, 'love');
     assert.equal(Boolean(store.getState().reactions[pinId]?.love), true);
@@ -76,14 +78,14 @@ describe('AppStore Reactive State Suite', () => {
       callCount++;
     });
 
-    assert.equal(callCount, 1); // Initial notification on subscribe
+    assert.equal(callCount, 1);
 
     store.setSort('popular');
     assert.equal(callCount, 2);
 
     unsubscribe();
     store.setSort('oldest');
-    assert.equal(callCount, 2); // Unsubscribed, no extra call
+    assert.equal(callCount, 2);
   });
 
   it('updates board filter and resets creator and page', () => {
@@ -94,8 +96,8 @@ describe('AppStore Reactive State Suite', () => {
 
     store.setBoard('board-uuid-123');
     const state = store.getState();
-    assert.equal(state.boardId, 'board-uuid-123');
-    assert.equal(state.creator, 'all');
+    assert.equal(state.activeBoardId, 'board-uuid-123');
+    assert.equal(state.activeCreatorId, 'all');
     assert.equal(state.page, 1);
   });
 

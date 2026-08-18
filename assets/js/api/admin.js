@@ -1,25 +1,25 @@
 /**
- * Selena Media Archive — Admin CMS API
- * Pure live Supabase Admin API for production.
+ * Selena Media Archive — Admin Management API
+ * Deep module providing complete administrative CRUD, media storage management, and analytics metrics.
  */
 
-import { getSupabase } from '../supabase-client.js';
+import { getSupabase } from './supabase.js';
 
 export const AdminAPI = {
   /**
-   * Fetch Dashboard Metrics
+   * Fetch live counts across pins, creators, boards, and saves
    */
   async fetchDashboardMetrics() {
-    const supabase = await getSupabase();
-    if (!supabase) {
+    const sb = await getSupabase();
+    if (!sb) {
       return { totalPins: 0, publishedPins: 0, draftPins: 0, totalCreators: 0, totalBoards: 0, totalSaves: 0 };
     }
 
     const [pinsRes, creatorsRes, boardsRes, savesRes] = await Promise.all([
-      supabase.from('pins').select('id, is_published, published_at', { count: 'exact' }),
-      supabase.from('creators').select('id', { count: 'exact' }),
-      supabase.from('boards').select('id', { count: 'exact' }),
-      supabase.from('pin_saves').select('id', { count: 'exact' })
+      sb.from('pins').select('id, is_published', { count: 'exact' }),
+      sb.from('creators').select('id', { count: 'exact' }),
+      sb.from('boards').select('id', { count: 'exact' }),
+      sb.from('pin_saves').select('id', { count: 'exact' })
     ]);
 
     const publishedCount = (pinsRes.data || []).filter(p => p.is_published).length;
@@ -36,13 +36,13 @@ export const AdminAPI = {
   },
 
   /**
-   * Fetch Admin Pins Table (including drafts and unpublished pins)
+   * Fetch admin pins catalog including draft/unpublished items
    */
   async fetchAdminPins({ page = 1, pageSize = 20, search = '', creator = 'all', status = 'all' } = {}) {
-    const supabase = await getSupabase();
-    if (!supabase) return { pins: [], totalCount: 0, hasMore: false };
+    const sb = await getSupabase();
+    if (!sb) return { pins: [], totalCount: 0, hasMore: false };
 
-    let q = supabase
+    let q = sb
       .from('pins')
       .select(`
         id, legacy_id, title, creator_id, board_id, category,
@@ -77,54 +77,43 @@ export const AdminAPI = {
   },
 
   /**
-   * Upload Image File to Supabase Storage bucket 'archive-pins'
+   * Upload image asset to Supabase Storage bucket 'archive-pins'
    */
-  async uploadImage(file, folder = 'uploads') {
-    const supabase = await getSupabase();
-    if (!supabase) throw new Error('Live storage connection unavailable.');
+  async uploadMedia(file, folder = 'uploads') {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database storage unavailable.');
 
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filePath = `${folder}/${Date.now()}_${sanitizedName}`;
+    const sanitized = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filePath = `${folder}/${Date.now()}_${sanitized}`;
 
-    const { error } = await supabase.storage
+    const { error } = await sb.storage
       .from('archive-pins')
-      .upload(filePath, file, {
-        cacheControl: '31536000',
-        upsert: false
-      });
+      .upload(filePath, file, { cacheControl: '31536000', upsert: false });
 
-    if (error) {
-      console.error('[AdminAPI] uploadImage error:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('archive-pins')
-      .getPublicUrl(filePath);
+    const { data: { publicUrl } } = sb.storage.from('archive-pins').getPublicUrl(filePath);
 
-    return {
-      path: filePath,
-      url: publicUrl
-    };
+    return { path: filePath, url: publicUrl };
   },
 
   /**
-   * Create New Pin
+   * Create new curated pin
    */
-  async createPin(pinData, imageFile = null) {
+  async createAdminPin(pinData, imageFile = null) {
     let imageUrl = pinData.image_url;
     let imagePath = pinData.image_path || null;
 
     if (imageFile) {
-      const uploaded = await this.uploadImage(imageFile, `pins/${pinData.creator_id || 'general'}`);
+      const uploaded = await this.uploadMedia(imageFile, `pins/${pinData.creator_id || 'general'}`);
       imageUrl = uploaded.url;
       imagePath = uploaded.path;
     }
 
-    const supabase = await getSupabase();
-    if (!supabase) throw new Error('Live database unavailable.');
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
 
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('pins')
       .insert({
         creator_id: pinData.creator_id,
@@ -149,22 +138,22 @@ export const AdminAPI = {
   },
 
   /**
-   * Update Pin
+   * Update existing pin
    */
-  async updatePin(id, pinData, newImageFile = null) {
+  async updateAdminPin(id, pinData, newImageFile = null) {
     let imageUrl = pinData.image_url;
     let imagePath = pinData.image_path;
 
     if (newImageFile) {
-      const uploaded = await this.uploadImage(newImageFile, `pins/${pinData.creator_id || 'general'}`);
+      const uploaded = await this.uploadMedia(newImageFile, `pins/${pinData.creator_id || 'general'}`);
       imageUrl = uploaded.url;
       imagePath = uploaded.path;
     }
 
-    const supabase = await getSupabase();
-    if (!supabase) throw new Error('Live database unavailable.');
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
 
-    const updatePayload = {
+    const payload = {
       title: pinData.title,
       description: pinData.description,
       creator_id: pinData.creator_id,
@@ -174,12 +163,12 @@ export const AdminAPI = {
       is_published: pinData.is_published,
       is_featured: pinData.is_featured
     };
-    if (imageUrl) updatePayload.image_url = imageUrl;
-    if (imagePath) updatePayload.image_path = imagePath;
+    if (imageUrl) payload.image_url = imageUrl;
+    if (imagePath) payload.image_path = imagePath;
 
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('pins')
-      .update(updatePayload)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
@@ -189,36 +178,32 @@ export const AdminAPI = {
   },
 
   /**
-   * Delete Pin (with storage cleanup)
+   * Delete pin and associated cloud storage media
    */
-  async deletePin(id, imagePath = null) {
-    const supabase = await getSupabase();
-    if (!supabase) throw new Error('Live database unavailable.');
+  async deleteAdminPin(id, imagePath = null) {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
 
-    const { error } = await supabase
-      .from('pins')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await sb.from('pins').delete().eq('id', id);
     if (error) throw error;
 
     if (imagePath && imagePath.startsWith('pins/')) {
       try {
-        await supabase.storage.from('archive-pins').remove([imagePath]);
-      } catch (e) {
-        console.warn('[AdminAPI] Could not delete storage file:', e);
+        await sb.storage.from('archive-pins').remove([imagePath]);
+      } catch (err) {
+        console.warn('[AdminAPI] Storage cleanup warning:', err);
       }
     }
     return true;
   },
 
   /**
-   * Batch Update Pin Status
+   * Batch update publish status
    */
-  async batchSetPublishStatus(ids, isPublished) {
-    const supabase = await getSupabase();
-    if (!supabase || !ids.length) return;
-    const { error } = await supabase
+  async batchPublish(ids, isPublished) {
+    const sb = await getSupabase();
+    if (!sb || !ids.length) return;
+    const { error } = await sb
       .from('pins')
       .update({ is_published: isPublished })
       .in('id', ids);
@@ -226,15 +211,12 @@ export const AdminAPI = {
   },
 
   /**
-   * Batch Delete Pins
+   * Batch delete pins
    */
-  async batchDeletePins(ids) {
-    const supabase = await getSupabase();
-    if (!supabase || !ids.length) return;
-    const { error } = await supabase
-      .from('pins')
-      .delete()
-      .in('id', ids);
+  async batchDelete(ids) {
+    const sb = await getSupabase();
+    if (!sb || !ids.length) return;
+    const { error } = await sb.from('pins').delete().in('id', ids);
     if (error) throw error;
   }
 };
