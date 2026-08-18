@@ -17,8 +17,8 @@ const getSafeStorage = (key) => {
 export const CONFIG = {
   // Public Supabase Configuration
   // Note: Anon key is designed for public client use and secured via Row Level Security (RLS).
-  SUPABASE_URL: runtimeConfig.SUPABASE_URL || getSafeStorage('selena_supabase_url') || '',
-  SUPABASE_ANON_KEY: runtimeConfig.SUPABASE_ANON_KEY || getSafeStorage('selena_supabase_anon_key') || '',
+  SUPABASE_URL: runtimeConfig.SUPABASE_URL || getSafeStorage('selena_supabase_url') || 'https://mdsoymxqbbgzdwtsuyll.supabase.co',
+  SUPABASE_ANON_KEY: runtimeConfig.SUPABASE_ANON_KEY || getSafeStorage('selena_supabase_anon_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kc295bXhxYmJnemR3dHN1eWxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwMjEyOTgsImV4cCI6MjEwMjU5NzI5OH0.Wxz2WL8UwKUX9rnM19Htz7LI8TWaUecZKR7nWEpevUs',
   ENABLE_GOOGLE_AUTH: runtimeConfig.ENABLE_GOOGLE_AUTH !== false,
 
   // Media CDN Base URL (Cloudflare R2 / Supabase Storage / local fallback)
