@@ -122,9 +122,9 @@ export function createProfileUI({
     }
 
     boardsGrid.innerHTML = boards.map(b => {
-      let thumb = 'assets/images/archive/rose_01.jpg';
-      if (b.creator_id === 'sharly' || b.id?.includes('sharly')) thumb = 'assets/images/archive/sharly_01.jpg';
-      else if (b.creator_id === 'yamu' || b.id?.includes('yamu')) thumb = 'assets/images/archive/yamu_01.jpg';
+      let thumb = 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/rose_01.jpg';
+      if (b.creator_id === 'sharly' || b.id?.includes('sharly')) thumb = 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/sharly_01.jpg';
+      else if (b.creator_id === 'yamu' || b.id?.includes('yamu')) thumb = 'https://mdsoymxqbbgzdwtsuyll.supabase.co/storage/v1/object/public/archive-pins/archive/yamu_01.jpg';
 
       return `
         <div class="p-board-card" data-board-id="${b.id}" tabindex="0" role="button">
