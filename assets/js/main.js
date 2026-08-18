@@ -93,7 +93,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         pinModalUI.updateSaveState(isSaved);
       }
     },
-    onRetry: () => loadFeedPins()
+    onRetry: () => loadFeedPins(),
+    onReset: () => router.navigate('')
   });
 
   const pinModalUI = createPinModal({
@@ -438,7 +439,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!userId) return;
     try {
       const serverSavedIds = await PinsAPI.fetchUserSavedPinIds(userId);
-      const merged = Array.from(new Set([...store.getState().savedPinIds, ...serverSavedIds]));
+      const localSavedIds = store.getState().savedPinIds;
+      // Push any pre-login guest saves to database
+      const unsyncedGuestIds = localSavedIds.filter(id => !serverSavedIds.includes(id));
+      if (unsyncedGuestIds.length) {
+        await Promise.allSettled(unsyncedGuestIds.map(id => PinsAPI.toggleSave(id, userId, false)));
+      }
+      const merged = Array.from(new Set([...localSavedIds, ...serverSavedIds]));
       store.setSavedPinIds(merged);
     } catch (err) {
       console.warn('[Auth] syncUserSaves failed:', err);
@@ -782,10 +789,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    bindChipListeners();
     router.init();
   } catch (err) {
     console.error('[Bootstrap] Initialization error:', err);
+    bindChipListeners();
     router.init();
   }
 });

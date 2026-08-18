@@ -88,14 +88,16 @@ describe('AppStore Deep Module Suite', () => {
     assert.equal(Boolean(store.getState().reactions[pinId]?.love), false);
   });
 
-  it('toggles creator follow status', () => {
+  it('toggles creator follow status and returns boolean state', () => {
     const store = createAppStore();
     const creatorId = 'rose';
 
-    store.toggleFollow(creatorId);
+    const f1 = store.toggleFollow(creatorId);
+    assert.equal(f1, true);
     assert.equal(store.getState().followedCreators.includes(creatorId), true);
 
-    store.toggleFollow(creatorId);
+    const f2 = store.toggleFollow(creatorId);
+    assert.equal(f2, false);
     assert.equal(store.getState().followedCreators.includes(creatorId), false);
   });
 
@@ -129,13 +131,21 @@ describe('AppStore Deep Module Suite', () => {
     assert.equal(state.page, 1);
   });
 
-  it('signs out user and clears admin state', async () => {
+  it('signs out user and clears admin, saves, reactions, and follows state', async () => {
     const store = createAppStore();
+    store.setSavedPinIds(['pin-1']);
+    store.toggleFollow('rose');
     store.setUser({ id: 'user-1', email: 'test@example.com' }, true);
+
     assert.equal(store.getState().isAdmin, true);
+    assert.equal(store.getState().savedPinIds.length, 1);
+    assert.equal(store.getState().followedCreators.length, 1);
 
     await store.signOut();
     assert.equal(store.getState().user, null);
     assert.equal(store.getState().isAdmin, false);
+    assert.deepEqual(store.getState().savedPinIds, []);
+    assert.deepEqual(store.getState().reactions, {});
+    assert.deepEqual(store.getState().followedCreators, []);
   });
 });

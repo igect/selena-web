@@ -309,7 +309,7 @@ export function createAdminUI({
       tableBody.innerHTML = pins.map(p => `
         <tr data-id="${p.id}">
           <td class="p-col-check"><input type="checkbox" class="p-pin-check" data-id="${p.id}" aria-label="Select pin"></td>
-          <td class="p-col-thumb"><img src="${p.image_url}" alt="${escapeHtml(p.title)}" class="p-table-thumb" /></td>
+          <td class="p-col-thumb"><img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.title)}" class="p-table-thumb" /></td>
           <td class="p-col-title">
             <strong>${escapeHtml(p.title)}</strong>
             ${p.destination_link ? `<br><small><a href="${escapeHtml(p.destination_link)}" target="_blank" rel="noopener noreferrer">↗ Link</a></small>` : ''}

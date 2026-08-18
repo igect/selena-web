@@ -61,8 +61,13 @@ export function createPinModal({
     }
 
     if (followBtn) {
-      followBtn.addEventListener('click', () => {
-        if (currentPin && onCreatorClick) onCreatorClick(currentPin.creator);
+      followBtn.addEventListener('click', async () => {
+        if (currentPin && onCreatorClick) {
+          const nowFollowing = await onCreatorClick(currentPin.creator);
+          if (typeof nowFollowing === 'boolean') {
+            updateFollowState(nowFollowing);
+          }
+        }
       });
     }
 
@@ -87,7 +92,10 @@ export function createPinModal({
         isReacting = true;
         btn.style.opacity = '0.6';
         try {
-          await onReactionClick(currentPin.id, type);
+          const nowActive = await onReactionClick(currentPin.id, type);
+          if (typeof nowActive === 'boolean') {
+            btn.classList.toggle('active', nowActive);
+          }
           await loadReactionCounts(currentPin.id);
         } finally {
           btn.style.opacity = '1';
@@ -304,14 +312,22 @@ function formatNumber(num) {
   return num.toString();
 }
 
-function downloadMedia(url, filename) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+async function downloadMedia(url, filename) {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  } catch {
+    window.open(url, '_blank');
+  }
 }
 
 async function shareMedia(pin) {

@@ -3,7 +3,7 @@
  * Renders high-performance masonry pin cards with bookmarking, error states, and interaction triggers.
  */
 
-export function createFeedUI({ container, onPinClick, onSaveClick, onRetry }) {
+export function createFeedUI({ container, onPinClick, onSaveClick, onRetry, onReset }) {
   function renderPins(pins, append = false, savedPinIds = []) {
     if (!container) return;
 
@@ -18,8 +18,13 @@ export function createFeedUI({ container, onPinClick, onSaveClick, onRetry }) {
             <div class="p-empty-icon">🔍</div>
             <h2 class="p-empty-title">No Pins Found</h2>
             <p class="p-empty-desc">We couldn't find any pins matching your active search or filters.</p>
+            <button class="p-btn-red" id="pFeedResetBtn">Explore all Pins</button>
           </div>
         `;
+        const resetBtn = container.querySelector('#pFeedResetBtn');
+        if (resetBtn && typeof onReset === 'function') {
+          resetBtn.addEventListener('click', onReset);
+        }
       }
       return;
     }

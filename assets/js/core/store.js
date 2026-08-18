@@ -284,6 +284,7 @@ export function createAppStore() {
       state.followedCreators = updated;
       storage.set('selena_followed', updated);
       notify();
+      return !isFollowing;
     },
 
     getReactions(pinId) {
@@ -294,6 +295,12 @@ export function createAppStore() {
       await AuthAPI.signOut();
       state.user = null;
       state.isAdmin = false;
+      state.savedPinIds = [];
+      state.reactions = {};
+      state.followedCreators = [];
+      storage.set('selena_saved_pins', []);
+      storage.set('selena_reactions', {});
+      storage.set('selena_followed', []);
       notify();
     }
   };
