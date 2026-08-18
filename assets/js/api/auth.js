@@ -92,7 +92,10 @@ export const AuthAPI = {
     const sb = await getSupabase();
     if (!sb) throw new Error('Database service unavailable.');
 
-    const redirectUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
+    const redirectUrl = typeof window !== 'undefined'
+      ? (window.location.origin + window.location.pathname).replace(/\/+$/, '') + '/'
+      : 'https://selena.dev.cv/';
+
     const { data, error } = await sb.auth.signInWithOAuth({
       provider,
       options: { redirectTo: redirectUrl }
