@@ -113,14 +113,15 @@ export const AuthAPI = {
   async signInWithOAuth(provider) {
     const supabase = await getSupabase();
     if (!supabase) {
-      throw new Error('Supabase is not configured for OAuth.');
+      return { data: null, error: new Error('Supabase is not configured for OAuth.') };
     }
-    return await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: window.location.origin + window.location.pathname
       }
     });
+    return { data, error };
   },
 
   /**

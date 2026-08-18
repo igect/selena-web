@@ -19,6 +19,7 @@ export const CONFIG = {
   // Note: Anon key is designed for public client use and secured via Row Level Security (RLS).
   SUPABASE_URL: runtimeConfig.SUPABASE_URL || getSafeStorage('selena_supabase_url') || '',
   SUPABASE_ANON_KEY: runtimeConfig.SUPABASE_ANON_KEY || getSafeStorage('selena_supabase_anon_key') || '',
+  ENABLE_GOOGLE_AUTH: runtimeConfig.ENABLE_GOOGLE_AUTH !== false,
 
   // Media CDN Base URL (Cloudflare R2 / Supabase Storage / local fallback)
   MEDIA_CDN_URL: runtimeConfig.MEDIA_CDN_URL || '',

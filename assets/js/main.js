@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     authModal: document.getElementById('pAuthModal'),
     authScrim: document.getElementById('pAuthScrim'),
     authCloseBtn: document.getElementById('pAuthCloseBtn'),
+    authError: document.getElementById('pAuthError'),
     authForm: document.getElementById('pAuthForm'),
     authEmailInput: document.getElementById('pAuthEmail'),
     authPasswordInput: document.getElementById('pAuthPassword'),
@@ -364,8 +365,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 9. Auth Modal & Flow
   let isAuthSignUpMode = false;
 
+  function showAuthError(msg) {
+    if (!els.authError) return;
+    els.authError.textContent = msg;
+    els.authError.hidden = false;
+  }
+
+  function clearAuthError() {
+    if (!els.authError) return;
+    els.authError.textContent = '';
+    els.authError.hidden = true;
+  }
+
   function openAuthModal(signup = false) {
     if (!els.authModal) return;
+    clearAuthError();
     isAuthSignUpMode = signup;
     updateAuthModalMode();
     els.authModal.hidden = false;
@@ -374,10 +388,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function closeAuthModal() {
     if (els.authModal) els.authModal.hidden = true;
+    clearAuthError();
     document.body.classList.remove('modal-open');
   }
 
   function updateAuthModalMode() {
+    clearAuthError();
     if (!els.authTitle || !els.authSubmitBtn || !els.authToggleModeBtn) return;
     if (isAuthSignUpMode) {
       els.authTitle.textContent = 'Create an Account';
@@ -746,6 +762,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const password = els.authPasswordInput.value;
       if (!email || !password) return;
 
+      clearAuthError();
       els.authSubmitBtn.disabled = true;
       els.authSubmitBtn.textContent = 'Processing...';
 
@@ -765,7 +782,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           closeAuthModal();
         }
       } catch (err) {
-        alert('Authentication failed: ' + err.message);
+        showAuthError(err.message || 'Authentication failed. Please check your credentials.');
       } finally {
         els.authSubmitBtn.disabled = false;
         updateAuthModalMode();
@@ -775,10 +792,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (els.authOAuthGoogleBtn) {
     els.authOAuthGoogleBtn.addEventListener('click', async () => {
+      clearAuthError();
       try {
-        await AuthAPI.signInWithOAuth('google');
+        const { error } = await AuthAPI.signInWithOAuth('google');
+        if (error) {
+          const msg = error.message || '';
+          if (msg.includes('provider is not enabled') || msg.includes('validation_failed')) {
+            showAuthError('Google Sign-In is not enabled on this Supabase project yet. Please log in with Email & Password above.');
+          } else {
+            showAuthError('Google login failed: ' + msg);
+          }
+        }
       } catch (err) {
-        alert('Google login failed: ' + err.message);
+        const msg = err.message || '';
+        if (msg.includes('provider is not enabled') || msg.includes('validation_failed')) {
+          showAuthError('Google Sign-In is not enabled on this Supabase project yet. Please log in with Email & Password above.');
+        } else {
+          showAuthError('Google login failed: ' + msg);
+        }
       }
     });
   }
