@@ -78,10 +78,34 @@ export function createAppStore() {
       return { ...state };
     },
 
+    getCreatedPinsCount() {
+      if (!state.user) return 0;
+      // This is a rough count from loaded pins; exact count needs API query
+      return state.pins.filter(p => p.user_id === state.user.id).length;
+    },
+
+    getSavedCount() {
+      return state.savedPinIds.length;
+    },
+
+    getFollowingCount() {
+      return state.followedCreators.length;
+    },
+
     subscribe(fn) {
       listeners.add(fn);
       fn(state);
       return () => listeners.delete(fn);
+    },
+
+    async refreshBoards() {
+      try {
+        const boards = await PinsAPI.fetchBoards(state.user?.id);
+        state.boards = boards;
+        notify();
+      } catch (err) {
+        console.warn('[Store] refreshBoards error:', err);
+      }
     },
 
     /**

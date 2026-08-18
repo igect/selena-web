@@ -68,26 +68,8 @@
             <h3>Updates</h3>
           </div>
           <div class="p-panel-list">
-            <div class="p-panel-item">
-              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
-              <div class="p-item-text">
-                <strong>Rosé</strong> published new pins in Studio Collection.
-                <span class="p-item-time">2h ago</span>
-              </div>
-            </div>
-            <div class="p-panel-item">
-              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
-              <div class="p-item-text">
-                <strong>Sharly Modak</strong> is trending on Pinterest today.
-                <span class="p-item-time">5h ago</span>
-              </div>
-            </div>
-            <div class="p-panel-item">
-              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
-              <div class="p-item-text">
-                Your board <strong>Aesthetic Favorites</strong> has new impressions.
-                <span class="p-item-time">1d ago</span>
-              </div>
+            <div class="p-popover-empty">
+              <p>No new notifications</p>
             </div>
           </div>
         </div>
@@ -107,13 +89,8 @@
             <h3>Inbox</h3>
           </div>
           <div class="p-panel-list">
-            <div class="p-panel-item unread">
-              <div class="p-item-avatar"><img src="assets/images/logo.png" alt=""></div>
-              <div class="p-item-text">
-                <strong>Pinterest Team</strong>
-                <p>Welcome to your home feed! Explore aesthetic pins and save to boards.</p>
-                <span class="p-item-time">Just now</span>
-              </div>
+            <div class="p-popover-empty">
+              <p>No messages yet</p>
             </div>
           </div>
         </div>
@@ -233,9 +210,9 @@
         <span class="p-profile-handle">@selenaofficial</span>
         
         <div class="p-profile-stats">
-          <span><strong id="pProfilePinsCount">4</strong> Pins</span>
-          <span><strong>342</strong> Followers</span>
-          <span><strong>89</strong> Following</span>
+          <span><strong id="pProfilePinsCount">0</strong> Pins</span>
+          <span><strong id="pProfileSavedCount">0</strong> Saved</span>
+          <span><strong id="pProfileFollowingCount">0</strong> Following</span>
         </div>
 
         <div class="p-profile-actions">
@@ -254,27 +231,7 @@
       <div class="p-profile-content">
         <!-- Boards Grid -->
         <div class="p-profile-boards-grid" id="pProfileBoardsGrid">
-          <div class="p-board-card" data-board-creator="rose">
-            <div class="p-board-preview">
-              <img src="assets/images/archive/rose/rose_0002.jpg" alt="">
-              <img src="assets/images/archive/rose/rose_0003.jpg" alt="">
-            </div>
-            <div class="p-board-meta">
-              <h4>Rosé Collection</h4>
-              <span>Curated Board · View pins</span>
-            </div>
-          </div>
-
-          <div class="p-board-card" data-board-creator="sharly">
-            <div class="p-board-preview">
-              <img src="assets/images/archive/sharly/sharly_0001.jpg" alt="">
-              <img src="assets/images/archive/sharly/sharly_0002.jpg" alt="">
-            </div>
-            <div class="p-board-meta">
-              <h4>Sharly Modak Board</h4>
-              <span>Curated Board · View pins</span>
-            </div>
-          </div>
+          <!-- Rendered dynamically by main.js -->
         </div>
 
         <!-- Dynamic Pins Grid for Saved / Created -->
@@ -520,15 +477,6 @@
             <!-- Comments Section -->
             <div class="p-comments-section">
               <span class="p-comments-title">Comments</span>
-              <div class="p-comment-item">
-                <div class="p-comment-avatar">
-                  <img src="assets/images/logo.png" alt="">
-                </div>
-                <div class="p-comment-body">
-                  <span class="p-comment-user">alex_curates</span>
-                  <p class="p-comment-text">Stunning aesthetic and perfect portrait lighting!</p>
-                </div>
-              </div>
             </div>
 
             <!-- More Like This / Related Pins Section -->

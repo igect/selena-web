@@ -3,6 +3,7 @@
  * Provides login, signup, session restoration, and admin role checking.
  */
 
+import { CONFIG } from '../config.js';
 import { getSupabase } from '../supabase-client.js';
 
 export const AuthAPI = {
@@ -39,8 +40,8 @@ export const AuthAPI = {
     const user = await this.getCurrentUser();
     if (!user) return false;
 
-    // Check local fallback override
-    if (localStorage.getItem('selena_local_is_admin') === 'true') {
+    // Local fallback override (development only)
+    if (!CONFIG.IS_PRODUCTION && localStorage.getItem('selena_local_is_admin') === 'true') {
       return true;
     }
 

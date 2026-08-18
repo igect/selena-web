@@ -228,6 +228,25 @@ button {
   position: relative;
 }
 
+.p-popover-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.p-board-option {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s;
+  list-style: none;
+}
+
+.p-board-option:hover {
+  background-color: var(--bg-hover);
+}
+
 .p-icon-btn {
   display: flex;
   align-items: center;

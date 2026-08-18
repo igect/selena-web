@@ -265,6 +265,29 @@ export const PinsAPI = {
     ];
   },
 
+  async createBoard(name, userId) {
+    const supabase = await getSupabase();
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('boards')
+        .insert({ name, slug, user_id: userId })
+        .select()
+        .single();
+      if (error) {
+        console.error('[PinsAPI] createBoard error:', error);
+        return { data: null, error };
+      }
+      return { data, error: null };
+    }
+    // Local fallback
+    const boards = JSON.parse(localStorage.getItem('pinterest_custom_boards') || '[]');
+    const board = { id: 'local-' + Date.now(), name, slug, is_system: false, created_at: new Date().toISOString() };
+    boards.push(board);
+    localStorage.setItem('pinterest_custom_boards', JSON.stringify(boards));
+    return { data: board, error: null };
+  },
+
   /**
    * Toggle Pin Save (Bookmark)
    */
@@ -273,15 +296,17 @@ export const PinsAPI = {
     if (supabase && userId) {
       if (isSaved) {
         // Remove save
-        await supabase
+        const { error } = await supabase
           .from('pin_saves')
           .delete()
           .match({ pin_id: pinId, user_id: userId });
+        if (error) console.error('[PinsAPI] toggleSave error:', error);
       } else {
         // Add save
-        await supabase
+        const { error } = await supabase
           .from('pin_saves')
           .insert({ pin_id: pinId, user_id: userId });
+        if (error) console.error('[PinsAPI] toggleSave error:', error);
       }
     }
   },
@@ -293,14 +318,16 @@ export const PinsAPI = {
     const supabase = await getSupabase();
     if (supabase && userId) {
       if (hasReacted) {
-        await supabase
+        const { error } = await supabase
           .from('pin_reactions')
           .delete()
           .match({ pin_id: pinId, user_id: userId, reaction_type: reactionType });
+        if (error) console.error('[PinsAPI] toggleReaction error:', error);
       } else {
-        await supabase
+        const { error } = await supabase
           .from('pin_reactions')
           .insert({ pin_id: pinId, user_id: userId, reaction_type: reactionType });
+        if (error) console.error('[PinsAPI] toggleReaction error:', error);
       }
     }
   },
@@ -364,5 +391,64 @@ export const PinsAPI = {
       localStorage.setItem('pinterest_comments', JSON.stringify(local));
     } catch {}
     return comment;
+  },
+
+  async createUserPin(pinData, imageFile) {
+    const supabase = await getSupabase();
+    if (supabase && imageFile) {
+      // Upload image
+      const folder = 'user-pins';
+      const fileName = `${folder}/${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('archive-pins')
+        .upload(fileName, imageFile, { cacheControl: '31536000', upsert: false });
+      if (uploadError) {
+        console.error('[PinsAPI] Image upload error:', uploadError);
+        return { data: null, error: uploadError };
+      }
+      const { data: { publicUrl } } = supabase.storage.from('archive-pins').getPublicUrl(fileName);
+      const row = {
+        title: pinData.title || 'Untitled Pin',
+        description: pinData.description || '',
+        image_url: publicUrl,
+        image_path: fileName,
+        destination_link: pinData.destinationLink || null,
+        board_id: pinData.boardId || null,
+        user_id: pinData.userId,
+        tags: pinData.tags ? pinData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        is_published: true,
+        published_at: new Date().toISOString()
+      };
+      const { data, error } = await supabase.from('pins').insert(row).select('*, creators(id, name, handle, avatar_url), boards(id, name, slug)').single();
+      if (error) {
+        console.error('[PinsAPI] createUserPin error:', error);
+        return { data: null, error };
+      }
+      return { data, error: null };
+    }
+    // Local fallback
+    let imageUrl = 'assets/images/logo.png';
+    if (imageFile) {
+      imageUrl = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(imageFile);
+      });
+    }
+    const localPin = {
+      id: 'local-pin-' + Date.now(),
+      title: pinData.title || 'Untitled Pin',
+      description: pinData.description || '',
+      img: imageUrl,
+      image_url: imageUrl,
+      board: pinData.boardName || 'General',
+      tags: pinData.tags ? pinData.tags.split(',').map(t => t.trim()) : [],
+      is_published: true,
+      created_at: new Date().toISOString()
+    };
+    const existing = JSON.parse(localStorage.getItem('pinterest_created_pins') || '[]');
+    existing.unshift(localPin);
+    localStorage.setItem('pinterest_created_pins', JSON.stringify(existing));
+    return { data: localPin, error: null };
   }
 };

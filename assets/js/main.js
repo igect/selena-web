@@ -83,6 +83,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     createModal: document.getElementById('pCreateModal'),
     createScrim: document.getElementById('pCreateScrim'),
     closeCreateBtn: document.getElementById('pCloseCreateBtn'),
+    createTitle: document.getElementById('pCreateTitle'),
+    createDesc: document.getElementById('pCreateDesc'),
+    createLink: document.getElementById('pCreateLink'),
+    createFileInput: document.getElementById('pFileInput'),
+    createDropzone: document.getElementById('pDropzone'),
+    createDropPlaceholder: document.getElementById('pDropPlaceholder'),
+    createPreviewWrapper: document.getElementById('pPreviewWrapper'),
+    createUploadPreview: document.getElementById('pUploadPreview'),
+    createRemovePreviewBtn: document.getElementById('pRemovePreviewBtn'),
+    createSubmitBtn: document.getElementById('pSubmitPinBtn'),
+    boardSelectBtn: document.getElementById('pBoardSelectBtn'),
+    boardDropdown: document.getElementById('pBoardDropdown'),
+    boardList: document.getElementById('pBoardList'),
+    boardSearchInput: document.getElementById('pBoardSearchInput'),
+    selectedBoardLabel: document.getElementById('pSelectedBoardLabel'),
+    openInlineBoardBtn: document.getElementById('pOpenInlineBoardBtn'),
+    inlineBoardForm: document.getElementById('pInlineBoardForm'),
+    newBoardNameInput: document.getElementById('pNewBoardNameInput'),
+    saveBoardBtn: document.getElementById('pSaveNewBoardBtn'),
+    cancelBoardBtn: document.getElementById('pCancelNewBoardBtn'),
+
+    // Profile action buttons
+    editProfileBtn: document.getElementById('pEditProfileBtn'),
+    shareProfileBtn: document.getElementById('pShareProfileBtn'),
+    profilePinsCount: document.getElementById('pProfilePinsCount'),
+    profileSavedCount: document.getElementById('pProfileSavedCount'),
+    profileFollowingCount: document.getElementById('pProfileFollowingCount'),
+    profileAvatar: document.querySelector('.p-profile-avatar-large img'),
 
     // Auth Modal
     authModal: document.getElementById('pAuthModal'),
@@ -362,6 +390,154 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Create Pin Modal (Public User Flow)
+  let selectedCreateFile = null;
+  let selectedBoardId = null;
+
+  function openCreateModal() {
+    if (!els.createModal) return;
+    selectedCreateFile = null;
+    selectedBoardId = null;
+    if (els.createTitle) els.createTitle.value = '';
+    if (els.createDesc) els.createDesc.value = '';
+    if (els.createLink) els.createLink.value = '';
+    if (els.createPreviewWrapper) els.createPreviewWrapper.hidden = true;
+    if (els.createDropPlaceholder) els.createDropPlaceholder.hidden = false;
+    if (els.selectedBoardLabel) els.selectedBoardLabel.textContent = 'Select a board';
+    if (els.boardDropdown) els.boardDropdown.hidden = true;
+    if (els.inlineBoardForm) els.inlineBoardForm.hidden = true;
+    populateBoardDropdown();
+    els.createModal.hidden = false;
+    document.body.classList.add('modal-open');
+  }
+
+  function closeCreateModal() {
+    if (els.createModal) els.createModal.hidden = true;
+    document.body.classList.remove('modal-open');
+  }
+
+  function populateBoardDropdown() {
+    if (!els.boardList) return;
+    const boards = store.getState().boards || [];
+    els.boardList.innerHTML = boards.map(b => `
+      <li class="p-board-option" data-board-id="${b.id}">${escapeHtml(b.name)}</li>
+    `).join('');
+    els.boardList.querySelectorAll('.p-board-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        selectedBoardId = opt.getAttribute('data-board-id');
+        if (els.selectedBoardLabel) els.selectedBoardLabel.textContent = opt.textContent;
+        if (els.boardDropdown) els.boardDropdown.hidden = true;
+      });
+    });
+  }
+
+  // Create Modal Event Listeners
+  if (els.closeCreateBtn) els.closeCreateBtn.addEventListener('click', closeCreateModal);
+  if (els.createScrim) els.createScrim.addEventListener('click', closeCreateModal);
+
+  if (els.createDropzone && els.createFileInput) {
+    els.createDropzone.addEventListener('click', () => els.createFileInput.click());
+    els.createFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedCreateFile = file;
+        const url = URL.createObjectURL(file);
+        if (els.createUploadPreview) els.createUploadPreview.src = url;
+        if (els.createPreviewWrapper) els.createPreviewWrapper.hidden = false;
+        if (els.createDropPlaceholder) els.createDropPlaceholder.hidden = true;
+      }
+    });
+  }
+
+  if (els.createRemovePreviewBtn) {
+    els.createRemovePreviewBtn.addEventListener('click', () => {
+      selectedCreateFile = null;
+      if (els.createFileInput) els.createFileInput.value = '';
+      if (els.createPreviewWrapper) els.createPreviewWrapper.hidden = true;
+      if (els.createDropPlaceholder) els.createDropPlaceholder.hidden = false;
+    });
+  }
+
+  if (els.boardSelectBtn && els.boardDropdown) {
+    els.boardSelectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      els.boardDropdown.hidden = !els.boardDropdown.hidden;
+    });
+  }
+
+  if (els.boardSearchInput) {
+    els.boardSearchInput.addEventListener('input', () => {
+      const q = els.boardSearchInput.value.toLowerCase();
+      els.boardList?.querySelectorAll('.p-board-option').forEach(opt => {
+        opt.hidden = !opt.textContent.toLowerCase().includes(q);
+      });
+    });
+  }
+
+  // Inline Board Creation
+  if (els.openInlineBoardBtn && els.inlineBoardForm) {
+    els.openInlineBoardBtn.addEventListener('click', () => {
+      els.inlineBoardForm.hidden = false;
+    });
+  }
+  if (els.cancelBoardBtn && els.inlineBoardForm) {
+    els.cancelBoardBtn.addEventListener('click', () => {
+      els.inlineBoardForm.hidden = true;
+      if (els.newBoardNameInput) els.newBoardNameInput.value = '';
+    });
+  }
+  if (els.saveBoardBtn) {
+    els.saveBoardBtn.addEventListener('click', async () => {
+      const name = els.newBoardNameInput?.value.trim();
+      if (!name) return;
+      const st = store.getState();
+      const { data, error } = await PinsAPI.createBoard(name, st.user?.id);
+      if (error) { showToast('Failed to create board'); return; }
+      showToast(`Board "${name}" created!`);
+      if (els.inlineBoardForm) els.inlineBoardForm.hidden = true;
+      if (els.newBoardNameInput) els.newBoardNameInput.value = '';
+      await store.refreshBoards();
+      populateBoardDropdown();
+      if (data) {
+        selectedBoardId = data.id;
+        if (els.selectedBoardLabel) els.selectedBoardLabel.textContent = name;
+      }
+    });
+  }
+
+  // Submit Pin
+  if (els.createSubmitBtn) {
+    els.createSubmitBtn.addEventListener('click', async () => {
+      const st = store.getState();
+      if (!st.user) { showToast('Please log in'); return; }
+      const title = els.createTitle?.value.trim();
+      if (!title) { showToast('Please add a title'); return; }
+      if (!selectedCreateFile) { showToast('Please add an image'); return; }
+
+      els.createSubmitBtn.disabled = true;
+      els.createSubmitBtn.textContent = 'Publishing...';
+      try {
+        const { data, error } = await PinsAPI.createUserPin({
+          title,
+          description: els.createDesc?.value.trim() || '',
+          destinationLink: els.createLink?.value.trim() || '',
+          boardId: selectedBoardId,
+          userId: st.user.id,
+          tags: ''
+        }, selectedCreateFile);
+        if (error) throw error;
+        showToast('Pin published!');
+        closeCreateModal();
+        loadMorePins(true);
+      } catch (err) {
+        showToast('Failed to publish pin: ' + (err.message || 'Unknown error'));
+      } finally {
+        els.createSubmitBtn.disabled = false;
+        els.createSubmitBtn.textContent = 'Publish';
+      }
+    });
+  }
+
   // 9. Auth Modal & Flow
   let isAuthSignUpMode = false;
 
@@ -442,8 +618,123 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (state.user && els.profileName) {
       els.profileName.textContent = state.user.user_metadata?.name || state.user.email?.split('@')[0] || 'Member';
       if (els.profileHandle) els.profileHandle.textContent = `@${state.user.email?.split('@')[0] || 'member'}`;
+      if (els.profileAvatar && state.user.user_metadata?.avatar_url) {
+        els.profileAvatar.src = state.user.user_metadata.avatar_url;
+      }
+    }
+
+    // 7. Profile Stats
+    if (els.profileSavedCount) els.profileSavedCount.textContent = store.getSavedCount();
+    if (els.profileFollowingCount) els.profileFollowingCount.textContent = store.getFollowingCount();
+
+    // 8. Profile Tabs & Grids
+    if (state.view === 'profile') {
+      renderProfileView(state);
     }
   });
+
+  // Profile View Rendering
+  let currentProfileTab = 'boards';
+
+  function renderProfileView(state) {
+    const tab = state.profileTab || currentProfileTab;
+    currentProfileTab = tab;
+
+    // Activate correct tab
+    [els.tabBoards, els.tabSaved, els.tabCreated].forEach(t => {
+      if (t) t.classList.remove('active');
+    });
+    if (tab === 'boards' && els.tabBoards) els.tabBoards.classList.add('active');
+    if (tab === 'saved' && els.tabSaved) els.tabSaved.classList.add('active');
+    if (tab === 'created' && els.tabCreated) els.tabCreated.classList.add('active');
+
+    // Show correct grid
+    if (els.profileBoardsGrid) els.profileBoardsGrid.hidden = tab !== 'boards';
+    if (els.profilePinsGrid) els.profilePinsGrid.hidden = tab === 'boards';
+
+    if (tab === 'boards') {
+      renderProfileBoards(state);
+    } else if (tab === 'saved') {
+      renderProfilePins(state.savedPinIds, 'saved');
+    } else if (tab === 'created') {
+      renderProfilePins(null, 'created');
+    }
+  }
+
+  function renderProfileBoards(state) {
+    if (!els.profileBoardsGrid) return;
+    const boards = state.boards || [];
+    if (boards.length === 0) {
+      els.profileBoardsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">No boards yet</p>';
+      return;
+    }
+    els.profileBoardsGrid.innerHTML = boards.map(b => `
+      <div class="p-board-card" data-board-id="${b.id}">
+        <div class="p-board-preview">
+          <div class="p-board-thumb" style="background:var(--bg-hover);"></div>
+        </div>
+        <h3 class="p-board-name">${escapeHtml(b.name)}</h3>
+        <p class="p-board-meta">Curated Board · View pins</p>
+      </div>
+    `).join('');
+    // Attach click handlers
+    els.profileBoardsGrid.querySelectorAll('.p-board-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const boardId = card.getAttribute('data-board-id');
+        if (boardId) {
+          store.setFilter('all');
+          store.setCreator('all');
+          // ponytail: navigate to home and filter by board — no new route needed
+          router.navigate('');
+          loadMorePins(true);
+        }
+      });
+    });
+  }
+
+  async function renderProfilePins(pinIds, mode) {
+    if (!els.profilePinsGrid) return;
+    els.profilePinsGrid.hidden = false;
+    els.profilePinsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">Loading...</p>';
+    try {
+      let pins = [];
+      if (mode === 'saved' && pinIds && pinIds.length > 0) {
+        const result = await PinsAPI.fetchPins({ savedPinIds: pinIds, pageSize: 50 });
+        pins = result.pins || [];
+      } else if (mode === 'created') {
+        const user = store.getState().user;
+        if (user) {
+          const result = await PinsAPI.fetchPins({ userId: user.id, pageSize: 50 });
+          pins = result.pins || [];
+        }
+      }
+      if (pins.length === 0) {
+        els.profilePinsGrid.innerHTML = `<p style="color:var(--text-muted);padding:24px;">No ${mode} pins yet</p>`;
+        return;
+      }
+      els.profilePinsGrid.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      pins.forEach(pin => {
+        const card = document.createElement('article');
+        card.className = 'p-pin-card';
+        card.setAttribute('data-id', pin.id);
+        card.innerHTML = `
+          <div class="p-pin-media">
+            <img src="${pin.img || pin.image_url}" alt="${escapeHtml(pin.title)}" class="p-pin-img" loading="lazy">
+          </div>
+          <div class="p-pin-info">
+            <h3 class="p-pin-title">${escapeHtml(pin.title)}</h3>
+          </div>
+        `;
+        card.addEventListener('click', () => router.navigate(`pin/${pin.id}`));
+        frag.appendChild(card);
+      });
+      els.profilePinsGrid.appendChild(frag);
+    } catch (err) {
+      console.error('[Profile] Error loading pins:', err);
+      els.profilePinsGrid.innerHTML = '<p style="color:var(--text-muted);padding:24px;">Error loading pins</p>';
+    }
+  }
 
   // 11. Wire Up Event Listeners
   // Nav
@@ -472,7 +763,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         openAuthModal(false);
         return;
       }
-      adminPanel.openCreate();
+      if (st.isAdmin) {
+        adminPanel.openCreate();
+      } else {
+        openCreateModal();
+      }
     });
   }
 
@@ -497,7 +792,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Favorites / Heart Header Button
   if (els.savedBtn) {
     els.savedBtn.addEventListener('click', () => {
-      router.navigate('profile');
+      router.navigate('profile/saved');
+    });
+  }
+
+  // Profile Tab Handlers
+  if (els.tabBoards) els.tabBoards.addEventListener('click', () => { currentProfileTab = 'boards'; store.setProfileTab('boards'); });
+  if (els.tabSaved) els.tabSaved.addEventListener('click', () => { currentProfileTab = 'saved'; store.setProfileTab('saved'); });
+  if (els.tabCreated) els.tabCreated.addEventListener('click', () => { currentProfileTab = 'created'; store.setProfileTab('created'); });
+
+  // Profile Edit Button
+  if (els.editProfileBtn) {
+    els.editProfileBtn.addEventListener('click', () => {
+      const st = store.getState();
+      if (!st.user) { openAuthModal(false); return; }
+      const currentName = st.user.user_metadata?.name || st.user.email?.split('@')[0] || '';
+      const newName = prompt('Edit your display name:', currentName);
+      if (newName !== null && newName.trim() !== '' && newName.trim() !== currentName) {
+        // ponytail: prompt() is the laziest working UI for name edit
+        import('../supabase-client.js').then(async ({ getSupabase }) => {
+          const supabase = await getSupabase();
+          if (supabase) {
+            const { error } = await supabase.auth.updateUser({ data: { name: newName.trim() } });
+            if (error) { showToast('Failed to update name'); return; }
+            showToast('Name updated!');
+            // Refresh session
+            const user = await AuthAPI.getCurrentUser();
+            if (user) store.setUser(user, st.isAdmin);
+          }
+        });
+      }
+    });
+  }
+
+  // Profile Share Button
+  if (els.shareProfileBtn) {
+    els.shareProfileBtn.addEventListener('click', async () => {
+      const url = `${window.location.origin}${window.location.pathname}#/profile`;
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Profile link copied!');
+      } catch {
+        showToast('Could not copy link');
+      }
     });
   }
 
