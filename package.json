@@ -19,5 +19,8 @@
   "license": "MIT",
   "devDependencies": {
     "@total-typescript/shoehorn": "^0.1.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3"
   }
 }
