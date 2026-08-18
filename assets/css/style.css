@@ -2518,3 +2518,13 @@ button {
   margin: 40px 0;
 }
 
+.p-feed-sentinel {
+  width: 100%;
+  height: 1px;
+}
+
+.p-dropzone.drag-over {
+  border-color: var(--pin-red);
+  background: rgba(230, 0, 35, 0.06);
+}
+

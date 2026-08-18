@@ -15,20 +15,22 @@ export const AdminAPI = {
       return { totalPins: 0, publishedPins: 0, draftPins: 0, totalCreators: 0, totalBoards: 0, totalSaves: 0 };
     }
 
-    const [pinsRes, creatorsRes, boardsRes, savesRes] = await Promise.all([
-      sb.from('pins').select('id, is_published', { count: 'exact' }),
-      sb.from('creators').select('id', { count: 'exact' }),
-      sb.from('boards').select('id', { count: 'exact' }),
-      sb.from('pin_saves').select('id', { count: 'exact' })
+    const [totalPinsRes, pubRes, creatorsRes, boardsRes, savesRes] = await Promise.all([
+      sb.from('pins').select('id', { count: 'exact', head: true }),
+      sb.from('pins').select('id', { count: 'exact', head: true }).eq('is_published', true),
+      sb.from('creators').select('id', { count: 'exact', head: true }),
+      sb.from('boards').select('id', { count: 'exact', head: true }),
+      sb.from('pin_saves').select('id', { count: 'exact', head: true })
     ]);
 
-    const publishedCount = (pinsRes.data || []).filter(p => p.is_published).length;
-    const draftCount = (pinsRes.data || []).filter(p => !p.is_published).length;
+    const totalPins = totalPinsRes.count || 0;
+    const publishedPins = pubRes.count || 0;
+    const draftPins = Math.max(0, totalPins - publishedPins);
 
     return {
-      totalPins: pinsRes.count || 0,
-      publishedPins: publishedCount,
-      draftPins: draftCount,
+      totalPins,
+      publishedPins,
+      draftPins,
       totalCreators: creatorsRes.count || 0,
       totalBoards: boardsRes.count || 0,
       totalSaves: savesRes.count || 0
@@ -72,7 +74,7 @@ export const AdminAPI = {
     return {
       pins: data || [],
       totalCount: count || (data || []).length,
-      hasMore: to < (count || 0)
+      hasMore: (page * pageSize) < (count || 0)
     };
   },
 

@@ -35,8 +35,11 @@ export const PinsAPI = {
         boards (id, name, slug)
       `, { count: 'exact' });
 
-    // Published pins only for regular catalog queries
-    q = q.eq('is_published', true);
+    if (userId) {
+      q = q.eq('user_id', userId);
+    } else {
+      q = q.eq('is_published', true);
+    }
 
     if (creator && creator !== 'all') {
       q = q.eq('creator_id', creator);
@@ -44,10 +47,6 @@ export const PinsAPI = {
 
     if (boardId) {
       q = q.eq('board_id', boardId);
-    }
-
-    if (userId) {
-      q = q.eq('user_id', userId);
     }
 
     if (onlySaved || filter === 'saved') {
@@ -59,8 +58,10 @@ export const PinsAPI = {
     }
 
     if (query && query.trim()) {
-      const clean = query.trim();
-      q = q.or(`title.ilike.%${clean}%,description.ilike.%${clean}%`);
+      const clean = query.trim().replace(/[,()%]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (clean) {
+        q = q.or(`title.ilike.%${clean}%,description.ilike.%${clean}%`);
+      }
     }
 
     // Sorting — an explicit sort choice from the Sort dropdown always wins;
@@ -91,7 +92,7 @@ export const PinsAPI = {
     return {
       pins: formatted,
       totalCount: count || formatted.length,
-      hasMore: to < (count || 0)
+      hasMore: (page * pageSize) < (count || 0)
     };
   },
 

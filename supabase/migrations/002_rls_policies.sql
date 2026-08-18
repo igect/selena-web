@@ -131,7 +131,7 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trigger_sync_pin_saves_count ON public.pin_saves;
 CREATE TRIGGER trigger_sync_pin_saves_count
@@ -148,7 +148,7 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trigger_sync_pin_reactions_count ON public.pin_reactions;
 CREATE TRIGGER trigger_sync_pin_reactions_count
