@@ -43,6 +43,7 @@ export function createAdminUI({
   let editingPinId = null;
   let selectedFile = null;
   let availableBoards = [];
+  let availableCreators = [];
   let currentPage = 1;
   const pageSize = 20;
   let totalCount = 0;
@@ -426,12 +427,31 @@ export function createAdminUI({
     }
   }
 
+  function setCreators(creators) {
+    availableCreators = creators || [];
+    const options = availableCreators.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+    if (creatorFilter) {
+      const current = creatorFilter.value || 'all';
+      creatorFilter.innerHTML = '<option value="all">All Creators</option>' + options;
+      creatorFilter.value = current;
+    }
+
+    const creatorSelect = document.getElementById('pAdminSelectCreator');
+    if (creatorSelect) {
+      const current = creatorSelect.value;
+      creatorSelect.innerHTML = options;
+      if (current) creatorSelect.value = current;
+    }
+  }
+
   init();
 
   return {
     loadMetrics,
     loadTable,
-    setBoards
+    setBoards,
+    setCreators
   };
 }
 

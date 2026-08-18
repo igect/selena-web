@@ -9,6 +9,7 @@ import { PinsAPI } from '../api/pins.js';
 export function createPinModalUI({
   modalEl,
   onPinCreated,
+  onBoardCreated,
   getUser
 }) {
   const scrim = modalEl.querySelector('#pCreateScrim');
@@ -122,6 +123,9 @@ export function createPinModalUI({
           inlineBoardForm.hidden = true;
           newBoardNameInput.value = '';
           if (boardDropdown) boardDropdown.hidden = true;
+          // Let the app-level store know so this board also shows up in
+          // Profile > Boards and stays available next time this modal opens.
+          if (onBoardCreated) onBoardCreated(board);
         } catch (err) {
           alert('Failed to create board: ' + err.message);
         }

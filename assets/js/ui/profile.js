@@ -122,7 +122,7 @@ export function createProfileUI({
     }
 
     boardsGrid.innerHTML = boards.map(b => {
-      const thumb = b.cover_image || 'assets/images/logo.png';
+      const thumb = b.cover_image_url || 'assets/images/logo.png';
 
       return `
         <div class="p-board-card" data-board-id="${b.id}" tabindex="0" role="button">

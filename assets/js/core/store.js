@@ -121,6 +121,7 @@ export function createAppStore() {
       } else if (params.filter !== undefined) {
         state.filter = params.filter;
         state.activeBoardId = null;
+        state.activeCreatorId = 'all';
         state.page = 1;
         state.pins = [];
       } else if (view === 'home') {
@@ -158,6 +159,7 @@ export function createAppStore() {
 
     setFilter(filter) {
       state.filter = filter;
+      state.activeCreatorId = 'all';
       state.page = 1;
       state.pins = [];
       notify();

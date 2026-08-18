@@ -104,9 +104,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       openAuth('login');
     },
     onClose: () => {
-      if (store.getState().view === 'pin') {
-        router.closePin();
-      }
+      // The modal only ever closes while it was opened for a pin route,
+      // so always restore the prior URL/route instead of gating on
+      // store.view (which is never actually set to 'pin' — see handleRoute).
+      router.closePin();
     },
     onSaveClick: async (pinId) => {
       const isSaved = await store.toggleSave(pinId);
@@ -136,7 +137,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     onPinCreated: (pin) => {
       showToast('Pin published successfully!');
       router.navigate(`pin/${pin.id}`);
-    }
+    },
+    onBoardCreated: () => store.refreshBoards()
   });
 
   const profileUI = createProfileUI({
@@ -298,17 +300,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 8. Route Transition Handler
+  let pinRequestToken = 0;
   async function handleRoute(route) {
     const { view, params } = route;
 
     if (view === 'pin' && params.pinId) {
+      const requestId = ++pinRequestToken;
       const pin = await PinsAPI.fetchPinById(params.pinId);
+      if (requestId !== pinRequestToken) return; // a newer pin navigation superseded this one
       if (pin) {
         const state = store.getState();
         const isSaved = state.savedPinIds.includes(pin.id);
         const reactions = store.getReactions(pin.id);
         const isFollowing = state.followedCreators.includes(pin.creator);
         pinModalUI.open(pin, isSaved, reactions, isFollowing);
+      } else {
+        showToast('This pin could not be found.');
+        router.closePin();
       }
       return;
     }
@@ -442,6 +450,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (els.dropdownUserName) els.dropdownUserName.textContent = 'Selena Member';
       if (els.dropdownUserEmail) els.dropdownUserEmail.textContent = '@member';
       if (els.menuAdminBtn) els.menuAdminBtn.hidden = true;
+      // Leave the create button visible for logged-out visitors so it can
+      // still act as a "log in" prompt; it's hidden once we know the
+      // logged-in user is not an admin (see below).
       return;
     }
 
@@ -450,6 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (els.dropdownUserName) els.dropdownUserName.textContent = name;
     if (els.dropdownUserEmail) els.dropdownUserEmail.textContent = email;
     if (els.menuAdminBtn) els.menuAdminBtn.hidden = !isAdmin;
+    if (els.navCreateBtn) els.navCreateBtn.hidden = !isAdmin;
     if (els.profileAvatar) {
       els.profileAvatar.src = user.user_metadata?.avatar_url || 'assets/images/logo.png';
     }
@@ -468,6 +480,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!st.user) {
         showToast('Please log in to create a pin');
         openAuth('login');
+        return;
+      }
+      // Pin uploads are curated/admin-only (see CONTEXT.md + the "Admins can
+      // insert pins" RLS policy) — regular members can browse, save, react,
+      // and comment, but cannot publish new pins.
+      if (!st.isAdmin) {
+        showToast('Pin uploads are managed by our curators.');
         return;
       }
       createPinUI.open(st.creators, st.boards);
@@ -656,6 +675,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       `);
     });
 
+    // Render curated system boards as explore spotlight cards too — the
+    // click handler below already supports data-explore-board, this loop
+    // was previously missing so boards never actually appeared here.
+    boards.filter(b => b.is_system).forEach(b => {
+      const imgUrl = b.cover_image_url || 'assets/images/logo.png';
+      const subtitle = b.description || 'Curated Collection';
+
+      cards.push(`
+        <div class="p-explore-card" data-explore-board="${b.id}" tabindex="0" role="button" aria-label="Explore ${escapeHtml(b.name)} Board">
+          <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(b.name)}" class="p-explore-img" loading="lazy" />
+          <div class="p-explore-card-overlay">
+            <span class="p-explore-tag">Curated Board</span>
+            <h3>${escapeHtml(b.name)}</h3>
+            <p>${escapeHtml(subtitle)} &rarr;</p>
+          </div>
+        </div>
+      `);
+    });
+
     grid.innerHTML = cards.join('');
   }
 
@@ -710,18 +748,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 13. Application Startup Bootstrap
   try {
-    const [user, isAdmin, creators, boards] = await Promise.all([
+    const [user, isAdmin, creators] = await Promise.all([
       AuthAPI.getCurrentUser(),
       AuthAPI.isCurrentUserAdmin(),
-      PinsAPI.fetchCreators(),
-      BoardsAPI.fetchBoards()
+      PinsAPI.fetchCreators()
     ]);
+    // Boards depend on which user is logged in (system boards + their own
+    // custom boards), so fetch them once we know who "user" is.
+    const boards = await BoardsAPI.fetchBoards(user?.id || null);
 
     store.setUser(user, isAdmin);
     store.setMetadata(creators, boards);
     renderDynamicChips(creators);
     renderExploreCards(creators, boards);
     adminUI.setBoards(boards);
+    adminUI.setCreators(creators);
     updateUserDisplay(user, isAdmin);
 
     if (user) {
@@ -732,6 +773,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isAdm = await AuthAPI.isCurrentUserAdmin();
       store.setUser(sessionUser, isAdm);
       updateUserDisplay(sessionUser, isAdm);
+      // Re-fetch boards scoped to the newly signed-in (or signed-out) user
+      // so their own custom boards show up in Profile > Boards and the
+      // Create Pin board picker without needing a full page reload.
+      await store.refreshBoards();
       if (sessionUser) {
         await syncUserSaves(sessionUser.id);
       }

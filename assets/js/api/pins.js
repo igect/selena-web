@@ -63,8 +63,11 @@ export const PinsAPI = {
       q = q.or(`title.ilike.%${clean}%,description.ilike.%${clean}%`);
     }
 
-    // Sorting
-    if (filter === 'popular' || sort === 'popular') {
+    // Sorting — an explicit sort choice from the Sort dropdown always wins;
+    // "Trending Ideas" (filter === 'popular') only sets the *default* sort
+    // when the user hasn't picked one, so switching to "Oldest"/"For you"
+    // while Trending is active actually takes effect.
+    if (sort === 'popular' || (filter === 'popular' && sort === 'newest')) {
       q = q.order('saves_count', { ascending: false }).order('published_at', { ascending: false });
     } else if (sort === 'oldest') {
       q = q.order('published_at', { ascending: true });
