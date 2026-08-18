@@ -1105,10 +1105,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       try {
         if (isAuthSignUpMode) {
-          const { user, error } = await AuthAPI.signUp(email, password);
+          const { user, session, error } = await AuthAPI.signUp(email, password);
           if (error) throw error;
-          showToast('Account created successfully!');
-          store.setUser(user, false);
+          if (user && !session) {
+            showToast('Account created! Please check your email to confirm your registration.');
+          } else {
+            showToast('Account created successfully!');
+            store.setUser(user, false);
+          }
           closeAuthModal();
         } else {
           const { user, error } = await AuthAPI.signInWithPassword(email, password);
@@ -1160,6 +1164,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       store.setUser(null, false);
     }
   });
+
+  // Handle OAuth hash params (clean URL after OAuth redirect)
+  if (typeof window !== 'undefined' && window.location.hash) {
+    if (window.location.hash.includes('error=')) {
+      try {
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        const errorDesc = hashParams.get('error_description') || hashParams.get('error') || 'Authentication failed';
+        showToast(decodeURIComponent(errorDesc).replace(/\+/g, ' '));
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch {}
+    } else if (window.location.hash.includes('access_token=')) {
+      setTimeout(() => {
+        window.history.replaceState(null, '', window.location.pathname + '#/');
+      }, 500);
+    }
+  }
 
   // 12. Helper Functions
   function extractDomain(url) {
