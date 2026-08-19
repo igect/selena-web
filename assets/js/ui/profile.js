@@ -12,6 +12,7 @@ export function createProfileUI({
   getUser,
   onAuthRequired,
   onUserUpdated,
+  onShareClick,
   onBoardClick,
   onPinClick,
   onTabChange
@@ -86,10 +87,23 @@ export function createProfileUI({
 
     if (shareBtn) {
       shareBtn.addEventListener('click', async () => {
-        const url = `${window.location.origin}/profile`;
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(url);
-          alert('Profile link copied to clipboard!');
+        const user = getUser ? getUser() : null;
+        const name = nameEl?.textContent || user?.user_metadata?.name || 'Selena Member';
+        const handle = user?.user_metadata?.handle || user?.email?.split('@')[0] || 'member';
+        if (onShareClick) {
+          onShareClick({
+            title: `${name} (@${handle}) on Selena`,
+            description: `View ${name}'s aesthetic moodboards and saved collections on Selena Archive.`,
+            pageUrl: `${window.location.origin}/profile`,
+            mediaUrl: user?.user_metadata?.avatar_url || null,
+            imageUrl: user?.user_metadata?.avatar_url || null
+          });
+        } else {
+          const url = `${window.location.origin}/profile`;
+          if (navigator.clipboard) {
+            await navigator.clipboard.writeText(url);
+            alert('Profile link copied to clipboard!');
+          }
         }
       });
     }

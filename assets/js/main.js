@@ -14,6 +14,8 @@ import { createPinModalUI } from './ui/create-pin.js';
 import { createFeedUI } from './ui/feed.js';
 import { createPinModal } from './ui/modal.js';
 import { createProfileUI } from './ui/profile.js';
+import { createSettingsModalUI } from './ui/settings.js';
+import { createShareModalUI } from './ui/share.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Core State Store
@@ -35,10 +37,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     savedBtn: document.getElementById('pSavedBtn'),
     savedBadge: document.getElementById('pSavedBadge'),
     themeBtn: document.getElementById('pThemeBtn'),
+    guestActions: document.getElementById('pGuestAuthActions'),
+    navLoginBtn: document.getElementById('pNavLoginBtn'),
+    navSignUpBtn: document.getElementById('pNavSignUpBtn'),
+    profileAnchor: document.getElementById('pProfileAnchor'),
     profileBtn: document.getElementById('pProfileBtn'),
-    profileAvatar: document.querySelector('.p-avatar-img'),
+    profileAvatar: document.getElementById('pHeaderAvatarImg') || document.querySelector('.p-avatar-img'),
     userDropdown: document.getElementById('pUserDropdown'),
     menuProfileBtn: document.getElementById('pMenuProfileBtn'),
+    menuSettingsBtn: document.getElementById('pMenuSettingsBtn'),
     menuAdminBtn: document.getElementById('pMenuAdminBtn'),
     menuSignOutBtn: document.getElementById('pMenuSignOutBtn'),
     dropdownUserName: document.getElementById('pDropdownUserName'),
@@ -62,6 +69,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     pinModal: document.getElementById('pPinModal'),
     createModal: document.getElementById('pCreateModal'),
     authModal: document.getElementById('pAuthModal'),
+    settingsModal: document.getElementById('pSettingsModal'),
+    shareModal: document.getElementById('pShareModal'),
     toast: document.getElementById('pToast'),
     toastMsg: document.getElementById('pToastMsg'),
 
@@ -82,7 +91,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 4. UI Components Initialization
+  // 4. UI Modals Initialization
+  const shareUI = createShareModalUI({
+    modalEl: els.shareModal,
+    onToast: showToast
+  });
+
+  const settingsUI = createSettingsModalUI({
+    modalEl: els.settingsModal,
+    getUser: () => store.getState().user,
+    onProfileUpdated: (updatedUser) => {
+      store.setUser(updatedUser, store.getState().isAdmin);
+      updateUserDisplay(updatedUser, store.getState().isAdmin);
+    },
+    onToast: showToast
+  });
+
   const feedUI = createFeedUI({
     container: els.pinsGrid,
     onPinClick: (pinId) => router.navigate(`pin/${pinId}`),
@@ -105,9 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       openAuth('login');
     },
     onClose: () => {
-      // The modal only ever closes while it was opened for a pin route,
-      // so always restore the prior URL/route instead of gating on
-      // store.view (which is never actually set to 'pin' — see handleRoute).
       router.closePin();
     },
     onSaveClick: async (pinId) => {
@@ -118,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     onReactionClick: (pinId, type) => store.toggleReaction(pinId, type),
     onCreatorClick: (creatorId) => store.toggleFollow(creatorId),
     onRelatedPinClick: (pinId) => router.navigate(`pin/${pinId}`),
+    onShareClick: (shareData) => shareUI.open(shareData),
     onCommentSubmit: async (pinId, text) => {
       const user = store.getState().user;
       if (!user) {
@@ -154,6 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateUserDisplay(updatedUser, store.getState().isAdmin);
       showToast('Profile updated!');
     },
+    onShareClick: (shareData) => shareUI.open(shareData),
     onBoardClick: (boardId) => router.navigate(`board/${boardId}`),
     onPinClick: (pinId) => router.navigate(`pin/${pinId}`),
     onTabChange: (tab) => router.navigate(`profile/${tab}`)
@@ -464,19 +487,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateUserDisplay(user, isAdmin = false) {
     if (!user) {
+      if (els.guestActions) els.guestActions.hidden = false;
+      if (els.profileAnchor) els.profileAnchor.hidden = true;
+      if (els.menuAdminBtn) els.menuAdminBtn.hidden = true;
+      if (els.userDropdown) els.userDropdown.hidden = true;
       if (els.dropdownUserName) els.dropdownUserName.textContent = 'Selena Member';
       if (els.dropdownUserEmail) els.dropdownUserEmail.textContent = '@member';
-      if (els.menuAdminBtn) els.menuAdminBtn.hidden = true;
-      // Leave the create button visible for logged-out visitors so it can
-      // still act as a "log in" prompt; it's hidden once we know the
-      // logged-in user is not an admin (see below).
+      if (els.profileAvatar) els.profileAvatar.src = 'assets/images/logo.png';
       return;
     }
 
+    if (els.guestActions) els.guestActions.hidden = true;
+    if (els.profileAnchor) els.profileAnchor.hidden = false;
+
     const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Selena Member';
-    const email = user.email || '@member';
+    const handle = user.user_metadata?.handle || user.email?.split('@')[0] || 'member';
     if (els.dropdownUserName) els.dropdownUserName.textContent = name;
-    if (els.dropdownUserEmail) els.dropdownUserEmail.textContent = email;
+    if (els.dropdownUserEmail) els.dropdownUserEmail.textContent = `@${handle}`;
     if (els.menuAdminBtn) els.menuAdminBtn.hidden = !isAdmin;
     if (els.navCreateBtn) els.navCreateBtn.hidden = !isAdmin;
     if (els.profileAvatar) {
@@ -490,6 +517,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (els.navExplore) els.navExplore.addEventListener('click', () => router.navigate('explore'));
   if (els.savedBtn) els.savedBtn.addEventListener('click', () => router.navigate('profile/saved'));
   if (els.resetBtn) els.resetBtn.addEventListener('click', () => router.navigate(''));
+
+  if (els.navLoginBtn) {
+    els.navLoginBtn.addEventListener('click', () => openAuth('login'));
+  }
+  if (els.navSignUpBtn) {
+    els.navSignUpBtn.addEventListener('click', () => openAuth('signup'));
+  }
 
   if (els.navCreateBtn) {
     els.navCreateBtn.addEventListener('click', () => {
@@ -526,6 +560,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     els.menuProfileBtn.addEventListener('click', () => {
       if (els.userDropdown) els.userDropdown.hidden = true;
       router.navigate('profile');
+    });
+  }
+
+  if (els.menuSettingsBtn) {
+    els.menuSettingsBtn.addEventListener('click', () => {
+      if (els.userDropdown) els.userDropdown.hidden = true;
+      settingsUI.open();
     });
   }
 

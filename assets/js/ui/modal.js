@@ -13,6 +13,7 @@ export function createPinModal({
   onCreatorClick,
   onRelatedPinClick,
   onCommentSubmit,
+  onShareClick,
   getUser = () => null,
   onAuthRequired = () => {}
 }) {
@@ -79,7 +80,18 @@ export function createPinModal({
 
     if (shareBtn) {
       shareBtn.addEventListener('click', () => {
-        if (currentPin) shareMedia(currentPin);
+        if (!currentPin) return;
+        if (onShareClick) {
+          onShareClick({
+            title: currentPin.title || 'Selena Pin',
+            description: currentPin.description || '',
+            pageUrl: `${window.location.origin}/pin/${currentPin.id}`,
+            mediaUrl: currentPin.img || currentPin.media_url,
+            imageUrl: currentPin.img || currentPin.media_url
+          });
+        } else {
+          shareMedia(currentPin);
+        }
       });
     }
 

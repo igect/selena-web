@@ -114,11 +114,17 @@
         </svg>
       </button>
 
-      <!-- Profile Avatar Button & Dropdown Menu -->
-      <div class="p-popover-anchor">
+      <!-- Guest Auth Actions (Shown when logged out) -->
+      <div class="p-guest-actions" id="pGuestAuthActions">
+        <button class="p-btn-login" id="pNavLoginBtn">Log in</button>
+        <button class="p-btn-signup" id="pNavSignUpBtn">Sign up</button>
+      </div>
+
+      <!-- Member Profile Avatar Button & Dropdown Menu (Shown when logged in) -->
+      <div class="p-popover-anchor" id="pProfileAnchor" hidden>
         <button class="p-avatar-btn" id="pProfileBtn" title="Your Account" aria-label="Profile">
           <div class="p-avatar-circle">
-            <img src="assets/images/logo.png" alt="Profile" class="p-avatar-img">
+            <img src="assets/images/logo.png" alt="Profile" class="p-avatar-img" id="pHeaderAvatarImg">
           </div>
         </button>
 
@@ -132,6 +138,10 @@
             <button class="p-dropdown-item-btn" id="pMenuProfileBtn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span>My Boards &amp; Saved</span>
+            </button>
+            <button class="p-dropdown-item-btn" id="pMenuSettingsBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Settings</span>
             </button>
             <button class="p-dropdown-item-btn" id="pMenuAdminBtn" hidden>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -649,6 +659,154 @@
         <div class="p-auth-footer">
           <button type="button" class="p-auth-toggle-link" id="pAuthToggleMode">Don't have an account? Sign Up</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Settings Modal (Profile, Security, 2FA) -->
+  <div id="pSettingsModal" class="p-modal-backdrop" hidden role="dialog" aria-modal="true" aria-label="Account Settings Modal">
+    <div class="p-modal-scrim" id="pSettingsScrim"></div>
+    <div class="p-modal-container p-settings-container">
+      <button class="p-btn-close-modal" id="pCloseSettingsBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <div class="p-settings-header">
+        <h2>Account Settings</h2>
+        <p class="p-auth-sub">Manage your profile, credentials, and two-factor authentication.</p>
+      </div>
+
+      <!-- Settings Navigation Tabs -->
+      <div class="p-settings-tabs">
+        <button class="p-settings-tab-btn active" id="pTabSettingsProfile">Profile</button>
+        <button class="p-settings-tab-btn" id="pTabSettingsSecurity">Security &amp; 2FA</button>
+      </div>
+
+      <!-- Profile Tab Panel -->
+      <div id="pPanelSettingsProfile" class="p-settings-panel">
+        <div class="p-avatar-edit-box">
+          <img src="assets/images/logo.png" alt="Avatar Preview" id="pSettingsAvatarPreview" class="p-avatar-edit-img">
+          <div>
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 4px;">Profile Photo</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Enter an image URL for your profile avatar.</p>
+          </div>
+        </div>
+
+        <div class="p-form-group">
+          <label for="pSettingsAvatarInput">Avatar Image URL</label>
+          <input type="url" id="pSettingsAvatarInput" class="p-input-text" placeholder="https://example.com/avatar.jpg">
+        </div>
+
+        <div class="p-form-group">
+          <label for="pSettingsNameInput">Display Name</label>
+          <input type="text" id="pSettingsNameInput" class="p-input-text" placeholder="Your Name">
+        </div>
+
+        <div class="p-form-group">
+          <label for="pSettingsHandleInput">Username / Handle</label>
+          <input type="text" id="pSettingsHandleInput" class="p-input-text" placeholder="username">
+        </div>
+
+        <button type="button" class="p-btn-red" id="pSaveProfileBtn" style="margin-top: 10px;">Save Changes</button>
+      </div>
+
+      <!-- Security & 2FA Tab Panel -->
+      <div id="pPanelSettingsSecurity" class="p-settings-panel" hidden>
+        <!-- Change Email -->
+        <div class="p-security-section">
+          <h4>Email Address</h4>
+          <p class="p-security-desc">Current email: <strong id="pSettingsCurrentEmail">member@example.com</strong></p>
+          <div class="p-share-field-row">
+            <input type="email" id="pSettingsNewEmailInput" class="p-input-text" placeholder="New email address">
+            <button type="button" class="p-btn-secondary" id="pUpdateEmailBtn">Update Email</button>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="p-security-section">
+          <h4>Change Password</h4>
+          <p class="p-security-desc">Choose a strong password with at least 6 characters.</p>
+          <div class="p-form-group" style="margin-bottom: 10px;">
+            <input type="password" id="pSettingsNewPasswordInput" class="p-input-text" placeholder="New password">
+          </div>
+          <div class="p-form-group" style="margin-bottom: 14px;">
+            <input type="password" id="pSettingsConfirmPasswordInput" class="p-input-text" placeholder="Confirm new password">
+          </div>
+          <button type="button" class="p-btn-secondary" id="pUpdatePasswordBtn">Change Password</button>
+        </div>
+
+        <!-- Two-Factor Authentication (2FA) -->
+        <div class="p-security-section">
+          <h4>Two-Factor Authentication (2FA) <span id="pMFABadge" class="p-badge-status p-status-inactive">Disabled</span></h4>
+          <p class="p-security-desc" id="pMFAStatusText">Protect your account with standard TOTP authenticator app verification.</p>
+
+          <button type="button" class="p-btn-secondary" id="pStart2FABtn">Set up 2FA</button>
+          <button type="button" class="p-btn-danger-sm" id="pDisable2FABtn" hidden>Disable 2FA</button>
+
+          <!-- 2FA QR Enrollment Box -->
+          <div id="pMFASetupBox" class="p-mfa-setup-box" hidden>
+            <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 6px;">Scan QR in Authenticator App</h5>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Use Google Authenticator, Authy, or 1Password.</p>
+            <img src="" alt="2FA QR Code" id="pMFAQrCode" class="p-mfa-qr-img">
+            <div>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Or enter secret manually:</p>
+              <div id="pMFASecretCode" class="p-mfa-secret">SECRETKEY</div>
+            </div>
+            <div class="p-share-field-row" style="max-width: 280px; margin: 12px auto;">
+              <input type="text" id="pMFACodeInput" class="p-input-text" placeholder="6-digit code" maxlength="6" style="text-align: center; font-size: 1.1rem; letter-spacing: 4px;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button type="button" class="p-btn-red" id="pVerify2FABtn">Verify &amp; Activate</button>
+              <button type="button" class="p-btn-secondary" id="pCancel2FABtn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comprehensive Share Dialog Modal -->
+  <div id="pShareModal" class="p-modal-backdrop" hidden role="dialog" aria-modal="true" aria-label="Share Modal">
+    <div class="p-modal-scrim" id="pShareScrim"></div>
+    <div class="p-modal-container p-share-container">
+      <button class="p-btn-close-modal" id="pCloseShareBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 16px;">Share Aesthetic</h3>
+
+      <div class="p-share-preview">
+        <img src="assets/images/logo.png" alt="Preview" id="pSharePreviewImg">
+        <h4 id="pShareTitle">Selena Aesthetic</h4>
+      </div>
+
+      <!-- Page Link Row -->
+      <div class="p-form-group" style="margin-bottom: 14px;">
+        <label for="pSharePageUrlInput">Web Link</label>
+        <div class="p-share-field-row">
+          <input type="text" id="pSharePageUrlInput" class="p-input-text" readonly>
+          <button type="button" class="p-btn-secondary" id="pCopyPageUrlBtn">Copy</button>
+        </div>
+      </div>
+
+      <!-- Direct Image Asset Row -->
+      <div class="p-form-group" id="pShareMediaUrlRow" style="margin-bottom: 14px;" hidden>
+        <label for="pShareMediaUrlInput">Direct Image URL</label>
+        <div class="p-share-field-row">
+          <input type="text" id="pShareMediaUrlInput" class="p-input-text" readonly>
+          <button type="button" class="p-btn-secondary" id="pCopyMediaUrlBtn">Copy</button>
+        </div>
+      </div>
+
+      <div class="p-share-actions-row">
+        <button type="button" class="p-btn-secondary" id="pNativeShareBtn" style="flex: 1;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>Share with Apps</span>
+        </button>
+        <button type="button" class="p-btn-secondary" id="pShareDownloadBtn" style="flex: 1;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download</span>
+        </button>
       </div>
     </div>
   </div>

@@ -105,6 +105,109 @@ export const AuthAPI = {
   },
 
   /**
+   * Update Member profile metadata (name, handle, avatar_url)
+   */
+  async updateProfile({ name, handle, avatarUrl }) {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
+
+    const metadata = {};
+    if (name !== undefined) metadata.name = name.trim();
+    if (handle !== undefined) metadata.handle = handle.trim().replace(/^@+/, '');
+    if (avatarUrl !== undefined) metadata.avatar_url = avatarUrl.trim();
+
+    const { data, error } = await sb.auth.updateUser({ data: metadata });
+    if (error) throw error;
+    return data.user;
+  },
+
+  /**
+   * Update Member email address
+   */
+  async updateEmail(email) {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
+
+    const { data, error } = await sb.auth.updateUser({ email: email.trim() });
+    if (error) throw error;
+    return data.user;
+  },
+
+  /**
+   * Update Member password
+   */
+  async updatePassword(password) {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
+
+    const { data, error } = await sb.auth.updateUser({ password });
+    if (error) throw error;
+    return data.user;
+  },
+
+  /**
+   * Enroll a new TOTP 2FA Factor
+   */
+  async enrollTOTP(issuer = 'Selena Media Archive') {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
+
+    const { data, error } = await sb.auth.mfa.enroll({
+      factorType: 'totp',
+      issuer
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Verify and activate a TOTP 2FA Factor using 6-digit code
+   */
+  async verifyTOTP(factorId, code) {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
+
+    const challenge = await sb.auth.mfa.challenge({ factorId });
+    if (challenge.error) throw challenge.error;
+
+    const verify = await sb.auth.mfa.verify({
+      factorId,
+      challengeId: challenge.data.id,
+      code: code.trim()
+    });
+    if (verify.error) throw verify.error;
+    return verify.data;
+  },
+
+  /**
+   * Unenroll / Disable a 2FA Factor
+   */
+  async unenrollTOTP(factorId) {
+    const sb = await getSupabase();
+    if (!sb) throw new Error('Database service unavailable.');
+
+    const { data, error } = await sb.auth.mfa.unenroll({ factorId });
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * List enrolled MFA Factors for the current user
+   */
+  async listMFAFactors() {
+    const sb = await getSupabase();
+    if (!sb) return { all: [], totp: [] };
+
+    try {
+      const { data, error } = await sb.auth.mfa.listFactors();
+      if (error) return { all: [], totp: [] };
+      return data || { all: [], totp: [] };
+    } catch {
+      return { all: [], totp: [] };
+    }
+  },
+
+  /**
    * Sign out current user
    */
   async signOut() {
