@@ -13,3 +13,7 @@ Canonical five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`,
 ### Domain docs
 
 Single-context (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
+
+### Coding guidelines
+
+Karpathy-inspired core principles (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution). See `docs/agents/coding-guidelines.md`.
