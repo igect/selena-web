@@ -86,7 +86,7 @@ export function createProfileUI({
 
     if (shareBtn) {
       shareBtn.addEventListener('click', async () => {
-        const url = `${window.location.origin}${window.location.pathname}#/profile`;
+        const url = `${window.location.origin}/profile`;
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(url);
           alert('Profile link copied to clipboard!');

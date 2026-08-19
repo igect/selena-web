@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "start": "npx serve ."
+    "start": "npx serve -s ."
   },
   "keywords": [
     "portfolio",

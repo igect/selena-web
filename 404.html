@@ -4,15 +4,13 @@
   <meta charset="UTF-8">
   <title>Redirecting — Selena Media Archive</title>
   <script>
-    // Selena uses hash-based client-side routing (e.g. "#/pin/<id>"), which
-    // the browser never sends to the server — so a real 404 here means the
-    // requested *path* itself doesn't exist as a static asset. There's
-    // nothing meaningful to reconstruct from that path, so just send the
-    // visitor back to the app root and preserve any hash they arrived with
-    // (in case a host stripped it before this page loaded).
+    // GitHub Pages SPA redirect: preserves path, query parameters, and hash
     (function () {
       var l = window.location;
-      l.replace(l.protocol + '//' + l.host + '/' + l.hash);
+      var path = l.pathname.slice(1);
+      var query = l.search ? '&' + l.search.slice(1) : '';
+      var redirectUrl = l.protocol + '//' + l.host + '/?p=' + encodeURIComponent(path) + query + l.hash;
+      l.replace(redirectUrl);
     })();
   </script>
 </head>

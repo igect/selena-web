@@ -1,28 +1,51 @@
 /**
- * Selena Media Archive — Client-Side Hash Router
- * Deep module resolving URL hashes into structured routing intents.
+ * Selena Media Archive — Client-Side History Router
+ * Deep module resolving URL paths into structured routing intents.
  */
 
 export class AppRouter {
   constructor(onRouteChange) {
     this.onRouteChange = onRouteChange;
-    this.handleHashChange = this.handleHashChange.bind(this);
-    this.lastNonPinRoute = '';
+    this.handleLocationChange = this.handleLocationChange.bind(this);
+    this.lastNonPinRoute = '/';
   }
 
   /**
    * Initializes the router and binds window event listeners
    */
   init() {
-    window.addEventListener('hashchange', this.handleHashChange);
-    this.handleHashChange();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', this.handleLocationChange);
+
+      // Handle SPA redirect query parameter (from 404.html)
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectPath = urlParams.get('p');
+      if (redirectPath) {
+        const cleanPath = redirectPath.startsWith('/') ? redirectPath : '/' + redirectPath;
+        window.history.replaceState(null, '', cleanPath + window.location.hash);
+      } else if (window.location.hash && window.location.hash.startsWith('#/')) {
+        // Migrate legacy hash route to clean URL
+        const cleanPath = '/' + window.location.hash.replace(/^#\/?/, '');
+        window.history.replaceState(null, '', cleanPath);
+      }
+    }
+    this.handleLocationChange();
   }
 
   /**
-   * Parses the current window location hash into route descriptor
+   * Parses the current window location path into route descriptor
    */
   parseRoute() {
-    const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '').trim();
+    let raw = '';
+    if (typeof window !== 'undefined') {
+      // If there's an active hash route (e.g. legacy link or during migration)
+      if (window.location.hash && window.location.hash.startsWith('#/')) {
+        raw = window.location.hash.replace(/^#\/?/, '').trim();
+      } else {
+        raw = (window.location.pathname || '').replace(/^\/+/, '').trim();
+      }
+    }
+
     const parts = raw.split('/').filter(Boolean);
 
     if (parts.length === 0) {
@@ -58,11 +81,13 @@ export class AppRouter {
     }
   }
 
-  handleHashChange() {
-    const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '').trim();
+  handleLocationChange() {
+    const raw = typeof window !== 'undefined'
+      ? (window.location.pathname || '').replace(/^\/+/, '').trim()
+      : '';
     const route = this.parseRoute();
     if (route.view !== 'pin') {
-      this.lastNonPinRoute = raw;
+      this.lastNonPinRoute = raw ? `/${raw}` : '/';
     }
     if (typeof this.onRouteChange === 'function') {
       this.onRouteChange(route);
@@ -72,30 +97,31 @@ export class AppRouter {
   /**
    * Programmatically navigates to a route
    */
-  navigate(path, replace = false) {
-    const clean = path.replace(/^#\/?/, '');
-    const targetHash = clean ? `#/${clean}` : '#/';
-
+  navigate(path = '', replace = false) {
     if (typeof window === 'undefined') return;
 
-    if (window.location.hash === targetHash) {
-      this.handleHashChange();
+    const clean = String(path).replace(/^#\/?/, '').replace(/^\/+/, '');
+    const targetPath = clean ? `/${clean}` : '/';
+
+    if (window.location.pathname === targetPath && !window.location.hash) {
+      this.handleLocationChange();
       return;
     }
 
     if (replace) {
-      const url = window.location.pathname + window.location.search + targetHash;
-      window.location.replace(url);
+      window.history.replaceState(null, '', targetPath);
     } else {
-      window.location.hash = targetHash;
+      window.history.pushState(null, '', targetPath);
     }
+
+    this.handleLocationChange();
   }
 
   /**
    * Closes pin modal and restores the prior view/filter route
    */
   closePin() {
-    this.navigate(this.lastNonPinRoute || '');
+    this.navigate(this.lastNonPinRoute || '/', true);
   }
 
   /**
@@ -103,7 +129,7 @@ export class AppRouter {
    */
   destroy() {
     if (typeof window !== 'undefined') {
-      window.removeEventListener('hashchange', this.handleHashChange);
+      window.removeEventListener('popstate', this.handleLocationChange);
     }
   }
 }

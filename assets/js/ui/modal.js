@@ -331,7 +331,7 @@ async function downloadMedia(url, filename) {
 }
 
 async function shareMedia(pin) {
-  const url = `${window.location.origin}${window.location.pathname}#/pin/${pin.id}`;
+  const url = `${window.location.origin}/pin/${pin.id}`;
   if (navigator.share) {
     try {
       await navigator.share({ title: pin.title, url });
