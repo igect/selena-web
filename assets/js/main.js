@@ -144,6 +144,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const profileUI = createProfileUI({
     container: els.profileSection,
+    getUser: () => store.getState().user,
+    onAuthRequired: () => {
+      showToast('Please log in to edit your profile');
+      openAuth('login');
+    },
+    onUserUpdated: (updatedUser) => {
+      store.setUser(updatedUser, store.getState().isAdmin);
+      updateUserDisplay(updatedUser, store.getState().isAdmin);
+      showToast('Profile updated!');
+    },
     onBoardClick: (boardId) => router.navigate(`board/${boardId}`),
     onPinClick: (pinId) => router.navigate(`pin/${pinId}`),
     onTabChange: (tab) => router.navigate(`profile/${tab}`)

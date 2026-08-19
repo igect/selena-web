@@ -9,6 +9,9 @@ import { getSupabase } from '../api/supabase.js';
 
 export function createProfileUI({
   container,
+  getUser,
+  onAuthRequired,
+  onUserUpdated,
   onBoardClick,
   onPinClick,
   onTabChange
@@ -54,17 +57,28 @@ export function createProfileUI({
 
     if (editBtn) {
       editBtn.addEventListener('click', async () => {
-        const currentName = nameEl?.textContent || '';
+        const user = getUser ? getUser() : null;
+        if (!user) {
+          if (onAuthRequired) {
+            onAuthRequired();
+          } else {
+            alert('Please log in to edit your profile.');
+          }
+          return;
+        }
+
+        const currentName = nameEl?.textContent || user.user_metadata?.name || '';
         const newName = prompt('Enter your new display name:', currentName);
         if (newName && newName.trim() && newName.trim() !== currentName) {
           const sb = await getSupabase();
           if (sb) {
-            const { error } = await sb.auth.updateUser({ data: { name: newName.trim() } });
+            const { data, error } = await sb.auth.updateUser({ data: { name: newName.trim() } });
             if (error) {
               alert('Could not update profile: ' + error.message);
               return;
             }
             if (nameEl) nameEl.textContent = newName.trim();
+            if (onUserUpdated && data?.user) onUserUpdated(data.user);
           }
         }
       });
