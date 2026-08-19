@@ -1,8 +1,4 @@
-/**
- * Selena Media Archive — Application Coordinator & Bootstrap
- * Deep module initializing store, router, UI modules, and real-time subscriptions.
- */
-
+import { CONFIG } from './config.js';
 import { AuthAPI } from './api/auth.js';
 import { BoardsAPI } from './api/boards.js';
 import { PinsAPI } from './api/pins.js';
@@ -17,7 +13,7 @@ import { createProfileUI } from './ui/profile.js';
 import { createSettingsModalUI } from './ui/settings.js';
 import { createShareModalUI } from './ui/share.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initApp() {
   // 1. Core State Store
   const store = createAppStore();
 
@@ -168,13 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     container: els.profileSection,
     getUser: () => store.getState().user,
     onAuthRequired: () => {
-      showToast('Please log in to edit your profile');
+      showToast('Please log in to participate');
       openAuth('login');
     },
     onUserUpdated: (updatedUser) => {
       store.setUser(updatedUser, store.getState().isAdmin);
       updateUserDisplay(updatedUser, store.getState().isAdmin);
       showToast('Profile updated!');
+    },
+    onEditClick: () => {
+      settingsUI.open('profile');
     },
     onShareClick: (shareData) => shareUI.open(shareData),
     onBoardClick: (boardId) => router.navigate(`board/${boardId}`),
@@ -805,6 +804,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 13. Application Startup Bootstrap
+  updateUserDisplay(null, false);
+
   try {
     const [user, isAdmin, creators] = await Promise.all([
       AuthAPI.getCurrentUser(),
@@ -846,4 +847,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindChipListeners();
     router.init();
   }
-});
+}
+
+// Ensure startup runs regardless of whether DOMContentLoaded has already fired
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

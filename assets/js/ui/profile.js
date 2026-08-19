@@ -3,6 +3,7 @@
  * Deep module managing user profile header, board collections, and saved/created tabs.
  */
 
+import { CONFIG } from '../config.js';
 import { BoardsAPI } from '../api/boards.js';
 import { PinsAPI } from '../api/pins.js';
 import { getSupabase } from '../api/supabase.js';
@@ -12,6 +13,7 @@ export function createProfileUI({
   getUser,
   onAuthRequired,
   onUserUpdated,
+  onEditClick,
   onShareClick,
   onBoardClick,
   onPinClick,
@@ -60,27 +62,12 @@ export function createProfileUI({
       editBtn.addEventListener('click', async () => {
         const user = getUser ? getUser() : null;
         if (!user) {
-          if (onAuthRequired) {
-            onAuthRequired();
-          } else {
-            alert('Please log in to edit your profile.');
-          }
+          if (onAuthRequired) onAuthRequired();
           return;
         }
 
-        const currentName = nameEl?.textContent || user.user_metadata?.name || '';
-        const newName = prompt('Enter your new display name:', currentName);
-        if (newName && newName.trim() && newName.trim() !== currentName) {
-          const sb = await getSupabase();
-          if (sb) {
-            const { data, error } = await sb.auth.updateUser({ data: { name: newName.trim() } });
-            if (error) {
-              alert('Could not update profile: ' + error.message);
-              return;
-            }
-            if (nameEl) nameEl.textContent = newName.trim();
-            if (onUserUpdated && data?.user) onUserUpdated(data.user);
-          }
+        if (onEditClick) {
+          onEditClick();
         }
       });
     }
@@ -111,19 +98,27 @@ export function createProfileUI({
 
   function renderUser(user) {
     if (!user) {
-      if (nameEl) nameEl.textContent = 'Selena Member';
-      if (handleEl) handleEl.textContent = '@member';
+      if (nameEl) nameEl.textContent = 'Guest Visitor';
+      if (handleEl) handleEl.textContent = 'Log in to save aesthetics & create custom moodboards';
       if (avatarImg) avatarImg.src = CONFIG.DEFAULT_IMAGE_URL;
+      if (editBtn) {
+        editBtn.textContent = 'Log In';
+        editBtn.hidden = false;
+      }
       return;
     }
 
     const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Selena Member';
-    const handle = `@${user.email?.split('@')[0] || 'member'}`;
+    const handle = `@${user.user_metadata?.handle || user.email?.split('@')[0] || 'member'}`;
     const avatar = user.user_metadata?.avatar_url || CONFIG.DEFAULT_IMAGE_URL;
 
     if (nameEl) nameEl.textContent = name;
     if (handleEl) handleEl.textContent = handle;
     if (avatarImg) avatarImg.src = avatar;
+    if (editBtn) {
+      editBtn.textContent = 'Edit profile';
+      editBtn.hidden = false;
+    }
   }
 
   function setCounts(pins = 0, saved = 0, following = 0) {

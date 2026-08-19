@@ -3,6 +3,7 @@
  * Deep module managing lightbox, high-res photo stage, reactions, comments, downloads, and related pins.
  */
 
+import { CONFIG } from '../config.js';
 import { PinsAPI } from '../api/pins.js';
 
 export function createPinModal({
