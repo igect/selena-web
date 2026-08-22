@@ -112,8 +112,22 @@ export const AuthAPI = {
     if (!sb) throw new Error('Database service unavailable.');
 
     const metadata = {};
-    if (name !== undefined) metadata.name = name.trim();
-    if (handle !== undefined) metadata.handle = handle.trim().replace(/^@+/, '');
+    if (name !== undefined) {
+      const cleanName = name.trim();
+      if (!cleanName) throw new Error('Display name cannot be empty.');
+      metadata.name = cleanName;
+    }
+    if (handle !== undefined) {
+      const cleanHandle = handle.trim().replace(/^@+/, '').toLowerCase();
+      const forbidden = ['admin', 'administrator', 'official', 'selena', 'curator', 'system', 'support', 'help', 'mod'];
+      if (!/^[a-z0-9._]{3,30}$/.test(cleanHandle)) {
+        throw new Error('Handle must be 3-30 characters (letters, numbers, dots, underscores).');
+      }
+      if (forbidden.includes(cleanHandle)) {
+        throw new Error(`The handle '@${cleanHandle}' is reserved and cannot be used.`);
+      }
+      metadata.handle = cleanHandle;
+    }
     if (avatarUrl !== undefined) metadata.avatar_url = avatarUrl.trim();
 
     const { data, error } = await sb.auth.updateUser({ data: metadata });

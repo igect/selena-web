@@ -179,14 +179,14 @@ export function createProfileUI({
           pinsGrid.innerHTML = '<p class="p-empty-tab">No saved pins yet.</p>';
           return;
         }
-        const res = await PinsAPI.fetchPins({ onlySaved: true, savedPinIds, pageSize: 50 });
+        const res = await PinsAPI.fetchPins({ onlySaved: true, savedPinIds, pageSize: CONFIG.PAGE_SIZE });
         pins = res.pins || [];
       } else if (mode === 'created') {
         if (!userId) {
           pinsGrid.innerHTML = '<p class="p-empty-tab">Log in to view created pins.</p>';
           return;
         }
-        const res = await PinsAPI.fetchPins({ userId, pageSize: 50 });
+        const res = await PinsAPI.fetchPins({ userId, pageSize: CONFIG.PAGE_SIZE });
         pins = res.pins || [];
       }
 

@@ -164,6 +164,9 @@ export function createPinModal({
     modalEl.hidden = false;
     document.body.style.overflow = 'hidden';
 
+    const scrollable = modalEl.querySelector('.p-detail-scrollable');
+    if (scrollable) scrollable.scrollTop = 0;
+
     if (imgEl) {
       imgEl.src = pin.img;
       imgEl.alt = pin.title || 'Pin';
@@ -262,7 +265,7 @@ export function createPinModal({
       }
       commentsSection.innerHTML = header + '<div class="p-comments-list">' + comments.map(c => `
         <div class="p-comment-item">
-          <img src="${c.user_avatar || CONFIG.DEFAULT_IMAGE_URL}" alt="${escapeHtml(c.user_name)}" class="p-comment-avatar" />
+          <img src="${CONFIG.resolveImageUrl(c.user_avatar)}" alt="${escapeHtml(c.user_name)}" class="p-comment-avatar" />
           <div class="p-comment-body">
             <strong>${escapeHtml(c.user_name)}</strong>
             <p>${escapeHtml(c.content)}</p>

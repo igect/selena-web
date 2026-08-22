@@ -3,6 +3,7 @@
  * Deep module managing administration dashboard, catalog table, editor drawer, media uploads, and batch actions.
  */
 
+import { CONFIG } from '../config.js';
 import { AdminAPI } from '../api/admin.js';
 
 export function createAdminUI({
@@ -45,7 +46,7 @@ export function createAdminUI({
   let availableBoards = [];
   let availableCreators = [];
   let currentPage = 1;
-  const pageSize = 20;
+  const pageSize = CONFIG.PAGE_SIZE || 24;
   let totalCount = 0;
   let selectedPinIds = new Set();
 

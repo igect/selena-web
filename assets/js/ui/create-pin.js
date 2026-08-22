@@ -47,7 +47,9 @@ export function createPinModalUI({
 
     if (dropzone && fileInput) {
       dropzone.addEventListener('click', (e) => {
-        if (!e.target.closest('#pRemovePreviewBtn')) fileInput.click();
+        if (e.target.closest('#pRemovePreviewBtn')) return;
+        if (selectedFile && e.target.closest('#pPreviewWrapper')) return;
+        fileInput.click();
       });
       dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -135,9 +137,12 @@ export function createPinModalUI({
     // Tag pills
     modalEl.querySelectorAll('.p-tag-pill').forEach(pill => {
       pill.addEventListener('click', () => {
+        pill.classList.toggle('active');
         const tag = pill.getAttribute('data-tag');
-        if (descInput && tag) {
-          descInput.value = descInput.value ? `${descInput.value} #${tag}` : `#${tag}`;
+        if (descInput && tag && pill.classList.contains('active')) {
+          if (!descInput.value.includes(`#${tag}`)) {
+            descInput.value = descInput.value ? `${descInput.value} #${tag}` : `#${tag}`;
+          }
         }
       });
     });
@@ -158,6 +163,10 @@ export function createPinModalUI({
         const creatorSelect = document.getElementById('pCreateCreator');
         const creatorId = creatorSelect?.value;
 
+        const pillTags = Array.from(modalEl.querySelectorAll('.p-tag-pill.active')).map(p => p.getAttribute('data-tag'));
+        const hashtagMatches = (description.match(/#[\w-]+/g) || []).map(t => t.replace(/^#/, ''));
+        const tags = Array.from(new Set([...pillTags, ...hashtagMatches]));
+
         try {
           submitBtn.disabled = true;
           submitBtn.textContent = 'Publishing...';
@@ -169,7 +178,8 @@ export function createPinModalUI({
             creatorId: creatorId,
             boardId: selectedBoardId,
             userId: user?.id || null,
-            destinationLink
+            destinationLink,
+            tags
           };
 
           const created = await PinsAPI.createPin(pinData, selectedFile);

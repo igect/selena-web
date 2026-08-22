@@ -58,9 +58,10 @@ export const PinsAPI = {
     }
 
     if (query && query.trim()) {
-      const clean = query.trim().replace(/[,()%]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (clean) {
-        q = q.or(`title.ilike.%${clean}%,description.ilike.%${clean}%`);
+      const terms = query.trim().replace(/[,()%]/g, ' ').split(/\s+/).filter(Boolean);
+      if (terms.length > 0) {
+        const conditions = terms.flatMap(t => [`title.ilike.%${t}%`, `description.ilike.%${t}%`]);
+        q = q.or(conditions.join(','));
       }
     }
 

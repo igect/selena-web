@@ -8,8 +8,29 @@ import { BoardsAPI } from '../api/boards.js';
 import { PinsAPI } from '../api/pins.js';
 
 const storage = {
-  get: (k, d = null) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  get: (k, d = null) => {
+    try {
+      if (typeof localStorage === 'undefined') return d;
+      const v = localStorage.getItem(k);
+      return v !== null ? JSON.parse(v) : d;
+    } catch {
+      return d;
+    }
+  },
+  set: (k, v) => {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch (err) {
+      console.warn('[Storage] Write failed (quota or browser restriction):', err);
+    }
+  },
+  remove: (k) => {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.removeItem(k);
+    } catch {}
+  }
 };
 
 export function createAppStore() {
@@ -248,25 +269,33 @@ export function createAppStore() {
     },
 
     async toggleReaction(pinId, reactionType) {
-      const rx = { ...(state.reactions[pinId] || {}) };
-      const hasReacted = Boolean(rx[reactionType]);
+      const currentPinRx = state.reactions[pinId] ? { ...state.reactions[pinId] } : {};
+      const hasReacted = Boolean(currentPinRx[reactionType]);
 
       if (hasReacted) {
-        delete rx[reactionType];
+        delete currentPinRx[reactionType];
       } else {
-        rx[reactionType] = true;
+        currentPinRx[reactionType] = true;
       }
 
-      state.reactions[pinId] = rx;
+      state.reactions = {
+        ...state.reactions,
+        [pinId]: currentPinRx
+      };
       storage.set('selena_reactions', state.reactions);
       notify();
 
       if (state.user) {
         const success = await PinsAPI.toggleReaction(pinId, state.user.id, reactionType, hasReacted);
         if (!success) {
-          if (hasReacted) rx[reactionType] = true;
-          else delete rx[reactionType];
-          state.reactions[pinId] = rx;
+          const rollbackRx = state.reactions[pinId] ? { ...state.reactions[pinId] } : {};
+          if (hasReacted) rollbackRx[reactionType] = true;
+          else delete rollbackRx[reactionType];
+
+          state.reactions = {
+            ...state.reactions,
+            [pinId]: rollbackRx
+          };
           storage.set('selena_reactions', state.reactions);
           notify();
           return hasReacted;
@@ -298,9 +327,9 @@ export function createAppStore() {
       state.savedPinIds = [];
       state.reactions = {};
       state.followedCreators = [];
-      storage.set('selena_saved_pins', []);
-      storage.set('selena_reactions', {});
-      storage.set('selena_followed', []);
+      storage.remove('selena_saved_pins');
+      storage.remove('selena_reactions');
+      storage.remove('selena_followed');
       notify();
     }
   };

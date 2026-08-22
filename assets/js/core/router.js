@@ -52,7 +52,15 @@ export class AppRouter {
       return { view: 'home', params: {} };
     }
 
-    const [segment, param] = parts;
+    const knownSegments = ['pin', 'board', 'creator', 'filter', 'explore', 'profile', 'admin'];
+    const knownIndex = parts.findIndex(p => knownSegments.includes(p.toLowerCase()));
+
+    if (knownIndex === -1) {
+      return { view: 'home', params: {} };
+    }
+
+    const segment = parts[knownIndex].toLowerCase();
+    const param = parts[knownIndex + 1];
 
     switch (segment) {
       case 'pin':

@@ -295,10 +295,12 @@ async function initApp() {
     }
   }
 
+  let isFetchingMore = false;
   async function loadMoreFeedPins() {
     const state = store.getState();
-    if (state.isLoading || !state.hasMore || state.view !== 'home') return;
+    if (isFetchingMore || state.isLoading || !state.hasMore || state.view !== 'home') return;
 
+    isFetchingMore = true;
     store.setLoading(true);
     store.nextPage();
     const nextState = store.getState();
@@ -319,6 +321,8 @@ async function initApp() {
     } catch (err) {
       console.error('[Feed] Load more error:', err);
       store.setLoading(false);
+    } finally {
+      isFetchingMore = false;
     }
   }
 

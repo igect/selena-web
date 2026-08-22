@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Selena Media Archive — UI Share Dialog Modal
  * Deep module managing multi-action sharing (clean link, direct media asset, web share, download).
  */
@@ -32,20 +32,18 @@ export function createShareModalUI({
     if (copyPageBtn && pageUrlInput) {
       copyPageBtn.addEventListener('click', async () => {
         const text = pageUrlInput.value;
-        if (navigator.clipboard && text) {
-          await navigator.clipboard.writeText(text);
-          if (onToast) onToast('Page link copied to clipboard!');
-        }
+        if (!text) return;
+        const copied = await copyToClipboard(text);
+        if (copied && onToast) onToast('Page link copied to clipboard!');
       });
     }
 
     if (copyMediaBtn && mediaUrlInput) {
       copyMediaBtn.addEventListener('click', async () => {
         const text = mediaUrlInput.value;
-        if (navigator.clipboard && text) {
-          await navigator.clipboard.writeText(text);
-          if (onToast) onToast('Direct image link copied to clipboard!');
-        }
+        if (!text) return;
+        const copied = await copyToClipboard(text);
+        if (copied && onToast) onToast('Direct image link copied to clipboard!');
       });
     }
 
@@ -120,4 +118,27 @@ export function createShareModalUI({
     open,
     close
   };
+}
+
+async function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {}
+  }
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const success = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return success;
+  } catch {
+    return false;
+  }
 }
